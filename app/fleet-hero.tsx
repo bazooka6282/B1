@@ -22,10 +22,12 @@ export function FleetHero({ slides }: { slides: Slide[] }) {
     <div className="cinema-shade" aria-hidden="true"/>
     <div className="wrap cinema-layout">
       <div className="cinema-copy">
-        <p className="cinema-kicker">Private bus squad</p>
-        <h1>BAZOOKA</h1>
-        <p className="cinema-tagline">Different machines. One identity.</p>
-        <p className="cinema-intro">BAZOOKA provides private bus services under temporary permits in Kerala.</p>
+        <div className="cinema-heading">
+          <p className="cinema-kicker">Private bus squad</p>
+          <h1>BAZOOKA</h1>
+          <p className="cinema-tagline">Different machines. One identity.</p>
+          <p className="cinema-intro">BAZOOKA provides private bus services under temporary permits in Kerala.</p>
+        </div>
         <div className="hero-actions">
           <Link className="cinema-cta" href="#fleet"><span>Explore our fleet</span><ArrowRight size={23}/></Link>
           <Link className="hero-service-link" href="#tp-services">Enquire about TP service</Link>

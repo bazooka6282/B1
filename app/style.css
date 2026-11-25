@@ -330,34 +330,37 @@
   }
   .cinema-image, .cinema-image.cinematic {
     position: relative; inset: auto; grid-area: 1 / 1;
-    width: 100%; aspect-ratio: 900 / 694; max-height: 440px;
-    background: #0b1620;
+    width: 100%; padding-top: 118px;
+    background: #050b11;
   }
-  .cinema-image img { display: block; object-position: center; }
+  .cinema-image img { display: block; height: auto; aspect-ratio: 900 / 694; object-position: center; }
   .cinema-image:not(.cinematic) img { object-fit: contain; object-position: center; }
   .cinema-shade {
     position: relative;
     grid-area: 1 / 1;
-    background: linear-gradient(0deg, #050b11 0%, #050b1100 22%);
+    background: linear-gradient(180deg, #050b11 108px, #050b11b8 152px, transparent 215px),
+      linear-gradient(0deg, #050b11, transparent 20%);
   }
-  .cinema-layout { display: contents; }
-  .cinema-copy {
-    grid-area: 3 / 1; max-width: 420px; justify-self: center;
-    width: calc(100% - 40px); margin: 0;
-    padding-block: 23px 24px; text-align: center;
+  .cinema-layout, .cinema-copy { display: contents; }
+  .cinema-heading {
+    grid-area: 1 / 1; align-self: start; z-index: 1;
+    padding: 20px 20px 0; text-align: left;
   }
   .cinema-copy h1 { font-size: clamp(3rem, 13vw, 5.2rem); }
-  .cinema-kicker { justify-content: center; gap: 9px; margin: 0 0 10px; color: var(--cyan); letter-spacing: .28em; }
+  .cinema-kicker { gap: 9px; margin: 0 0 8px; color: var(--cyan); letter-spacing: .28em; }
   .cinema-kicker::before { width: 15px; background: currentColor; }
-  .cinema-tagline { margin: 10px 0 13px; letter-spacing: .23em; }
-  .cinema-intro { max-width: 30ch; margin: 0 auto 17px; color: #b9c8d4; font-size: .94rem; line-height: 1.55; }
+  .cinema-tagline { margin: 8px 0 9px; letter-spacing: .23em; }
+  .cinema-intro { max-width: 36ch; margin: 0; color: #dbe6ee; font-size: .9rem; line-height: 1.45; }
   .cinema-cta {
     width: 100%; padding-inline: 16px; min-height: 48px;
     justify-content: space-between; gap: 8px;
     border-radius: 6px; clip-path: none; font-size: .8rem;
   }
   .cinema-cta svg { width: 17px; }
-  .cinema-hero .hero-actions { display: grid; justify-items: center; gap: 0; }
+  .cinema-hero .hero-actions {
+    grid-area: 3 / 1; display: grid; justify-items: center; justify-self: center; gap: 0;
+    width: calc(100% - 40px); max-width: 420px; padding-block: 14px 10px;
+  }
   .cinema-hero .hero-service-link { font-size: .84rem; color: #d5e4ed; }
   .cinema-hero .hero-service-link:hover { color: var(--cyan); }
   .cinema-controls {
