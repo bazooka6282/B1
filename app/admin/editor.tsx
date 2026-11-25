@@ -18,7 +18,7 @@ function dailyRateOptions(stored: unknown) {
  return [...new Set([...defaultDailyRates,...custom])].sort((a,b)=>a-b);
 }
 
-export function Editor({client,data,table,row,close,onSaved,ratePresets,onRatePresets}:{client:ReturnType<typeof browserClient>;data:Data;table:string;row?:Row;close:()=>void;onSaved:(message:string)=>void;ratePresets:unknown;onRatePresets:(rates:number[])=>void}){
+export function Editor({client,data,table,row,close,onSaved,onDelete,ratePresets,onRatePresets}:{client:ReturnType<typeof browserClient>;data:Data;table:string;row?:Row;close:()=>void;onSaved:(message:string)=>void;onDelete:(row:Row)=>Promise<void>;ratePresets:unknown;onRatePresets:(rates:number[])=>void}){
  const config=modules[table];
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
@@ -100,21 +100,20 @@ export function Editor({client,data,table,row,close,onSaved,ratePresets,onRatePr
     else if(['money','number','session','route','revenue'].includes(type))draft[key]=Number(value);
     else draft[key]=key==='registration'?String(value).toUpperCase().replace(/\s+/g,''):String(value).trim();
    }
+   if(table==='website_settings'&&!row)draft.id=1;
    const source=client.from(table);
-   const result=row?await source.update(draft).eq(config.key,row[config.key]!):await source.insert({ ...draft });
+   const result=row?await source.update(draft).eq(config.key,row[config.key]!).select(config.key):await source.insert(draft);
    if(result.error)throw result.error;
+   if(row&&!result.data?.length)throw new Error('This record could not be updated. Refresh the dashboard and try again.');
    onSaved('Record saved.');
   }catch(error){setError((error as Error).message);}
   finally{setBusy(false);}
  }
  async function remove(){
-  if(!row||busy||!config.remove||!confirm('Delete this record? The change is recorded in the audit log.'))return;
+  if(!row||busy)return;
   setBusy(true);setError('');
-  try{
-   const {error}=await client.from(table).delete().eq(config.key,row[config.key]!);
-   if(error)throw error;
-   onSaved('Record deleted.');
-  }catch(error){setError((error as Error).message);}
+  try{await onDelete(row);}
+  catch(error){setError((error as Error).message);}
   finally{setBusy(false);}
  }
  return <div className="modal-backdrop" onKeyDown={event=>{if(event.key==='Escape'&&!busy)close();}}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="edit-heading">
@@ -148,5 +147,5 @@ export function Editor({client,data,table,row,close,onSaved,ratePresets,onRatePr
    key==='notes'?<textarea {...props} defaultValue={value}/>:
    type==='document'||type==='photo'?<><input {...props} type="file" accept={type==='photo'?'image/jpeg,image/png,image/webp':'application/pdf,image/jpeg,image/png,image/webp'}/>{type==='document'&&row?.[key]&&<button className="text-link" type="button" onClick={async()=>{const {data,error}=await client.storage.from('fleet-documents').createSignedUrl(String(row[key]),60);if(error)setError(error.message);else location.assign(data.signedUrl);}}>Open attached document</button>}</>:
    <input {...props} type={type==='money'?'number':type} defaultValue={value} min={type==='money'||type==='number'?0:undefined} step={type==='money'||key==='quantity'?'0.01':undefined}/>}</label>;
- })}</div>{error&&<div className="message error" role="alert">{error}</div>}<div className="modal-actions">{row&&config.remove&&<button className="danger" type="button" onClick={remove} disabled={busy}>Delete record</button>}<button className="button secondary" type="button" onClick={close} disabled={busy}>Cancel</button><button className="button primary" disabled={busy}>{busy?'Saving…':'Save record'}</button></div></form></section></div>;
+ })}</div>{error&&<div className="message error" role="alert">{error}</div>}<div className="modal-actions">{row&&<button className="danger" type="button" onClick={remove} disabled={busy}>Delete record</button>}<button className="button secondary" type="button" onClick={close} disabled={busy}>Cancel</button><button className="button primary" disabled={busy}>{busy?'Saving…':'Save record'}</button></div></form></section></div>;
 }

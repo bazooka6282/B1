@@ -428,3 +428,7 @@
 @media (max-width: 760px) {
   .tp-services-layout { grid-template-columns: minmax(0, 1fr); }
 }
+
+.row-actions { display: flex; align-items: center; gap: 14px; }
+.row-actions button { min-height: 36px; }
+.row-actions .row-delete { color: #9b3434; }

@@ -31,6 +31,7 @@ export function Dashboard({email,initialRatePresets}:{email:string;initialRatePr
  const [error,setError]=useState('');
  const [edit,setEdit]=useState<{table:string;row?:Row}>();
  const [profile,setProfile]=useState<Row>();
+ const [deleting,setDeleting]=useState(false);
  const [search,setSearch]=useState('');
  const [order,setOrder]=useState({key:'',direction:1});
  const [bus,setBus]=useState('');
@@ -55,6 +56,26 @@ export function Dashboard({email,initialRatePresets}:{email:string;initialRatePr
  function navigate(next:string){setSection(next);setMenu(false);setSearch('');setOrder({key:'',direction:1});setNotice('');}
  const table=section==='maintenance'?'expenses':section;
  const module=modules[table];
+ async function deleteRecord(recordTable:string,row:Row){
+  if(deleting)return;
+  const recordModule=modules[recordTable];
+  const id=row[recordModule.key];
+  if(id==null)throw new Error('The record ID could not be found. Refresh the dashboard and try again.');
+  const saleNote=recordTable==='fleet_transactions'&&row.kind==='Sale'
+   ? ' The vehicle will stay marked as Sold until you update it in Fleet management.' : '';
+  if(!confirm(`Delete record ${id} from ${recordModule.title}?${saleNote}`))return;
+  setDeleting(true);setError('');setNotice('');
+  try {
+   const {data:removed,error}=await client.from(recordTable).delete().eq(recordModule.key,id).select(recordModule.key);
+   if(error?.code==='23503')throw new Error('This record is linked to other records. Remove or reassign those links before deleting it.');
+   if(error)throw error;
+   if(!removed?.length)throw new Error('The record was already removed or this account cannot delete it.');
+   setEdit(undefined);
+   setData(previous=>previous&&({...previous,[recordTable]:previous[recordTable].filter(item=>item[recordModule.key]!==id)}));
+   setNotice('Record deleted.');
+   void load().catch(error=>setError(error.message));
+  }finally{setDeleting(false);}
+ }
  const entries=data?ledger(data):[];
  const buses=data?.buses.filter(row=>(!bus||row.registration===bus)&&(!category||row.category===category))??[];
  const selected=new Set(buses.map(row=>row.registration));
@@ -111,7 +132,7 @@ export function Dashboard({email,initialRatePresets}:{email:string;initialRatePr
   return <button className={section===item?'selected':''} key={item} onClick={()=>navigate(item)}><Icon size={17}/>{titleFor(item)}</button>;
  })}</nav><button className="signout" onClick={async()=>{const result=await client.auth.signOut();if(result.error)setError(result.error.message);else location.assign('/login');}}><LogOut size={16}/>Sign out</button></aside>
  <div className="admin-main"><header className="admin-top"><button className="icon-button" aria-expanded={menu} aria-label="Toggle sidebar" onClick={()=>setMenu(!menu)}><Menu size={20}/></button><strong>Fleet operations</strong><Link href="/" className="site-preview"><Globe size={16}/>View website</Link><span className="avatar" title={email}>{email.slice(0,2).toUpperCase()}</span></header>
- <main className="admin-content"><div className="admin-title"><div><p className="eyebrow dark"><span/> BAZOOKA ADMIN</p><h1>{titleFor(section)}</h1></div>{module&&table!=='website_settings'&&<button className="button primary" disabled={!data} onClick={()=>setEdit({table})}><Plus size={18}/> Add record</button>}</div>
+ <main className="admin-content"><div className="admin-title"><div><p className="eyebrow dark"><span/> BAZOOKA ADMIN</p><h1>{titleFor(section)}</h1></div>{module&&(table!=='website_settings'||data?.website_settings.length===0)&&<button className="button primary" disabled={!data} onClick={()=>setEdit({table})}><Plus size={18}/> Add record</button>}</div>
  {notice&&<div className="message" role="status">{notice}</div>}{error&&<div className="message error" role="alert">{error} <button className="text-link" onClick={()=>{setError('');void load().catch(error=>setError(error.message));}}>Retry</button></div>}{!data&&!error&&<div className="skeleton" role="status">Loading fleet records…</div>}
  {data&&['overview','company','reports'].includes(section)&&<><div className="filters">
  <label className="field">Period<select defaultValue="" onChange={event=>setPeriod(event.target.value)}><option value="">All time</option><option>Today</option><option>This week</option><option>This month</option><option>This year</option><option>Custom</option></select></label>
@@ -131,9 +152,9 @@ export function Dashboard({email,initialRatePresets}:{email:string;initialRatePr
  ]}/></section>}
  {data&&section==='reports'&&<section className="panel"><div className="panel-title"><h2>BAZOOKA reports</h2><select aria-label="Report type" value={report} onChange={event=>setReport(event.target.value)}>{['Operating ledger','Maintenance expenses','Outstanding receivables','Fleet investment'].map(item=><option key={item}>{item}</option>)}</select></div><div className="report-actions"><button className="button secondary" onClick={exportReport}>Download CSV</button><button className="button secondary" onClick={()=>window.print()}>Print or save PDF</button></div><Grid rows={reportRows} columns={reportColumns}/></section>}
  {data&&section==='notifications'&&<section className="panel"><div className="panel-title"><h2>Document and permit reminders</h2></div><Grid rows={reminders.sort((a,b)=>String(a.date).localeCompare(String(b.date)))} columns={['date','bus','detail']}/></section>}
- {data&&module&&<section className="panel"><div className="panel-title"><h2>{rows.length} {rows.length===1?'record':'records'}</h2><input type="search" aria-label="Search records" placeholder="Search records" value={search} onChange={event=>setSearch(event.target.value)}/></div><Grid rows={rows} columns={module.columns} onEdit={row=>setEdit({table,row})} onProfile={table==='buses'?setProfile:undefined} onSort={key=>setOrder(previous=>({key,direction:previous.key===key?-previous.direction:1}))}/></section>}
+ {data&&module&&<section className="panel"><div className="panel-title"><h2>{rows.length} {rows.length===1?'record':'records'}</h2><input type="search" aria-label="Search records" placeholder="Search records" value={search} onChange={event=>setSearch(event.target.value)}/></div><Grid rows={rows} columns={module.columns} onEdit={row=>setEdit({table,row:data[table].find(record=>record[module.key]===row[module.key])??row})} onDelete={row=>void deleteRecord(table,row).catch(error=>setError(error.message))} deleting={deleting} onProfile={table==='buses'?setProfile:undefined} onSort={key=>setOrder(previous=>({key,direction:previous.key===key?-previous.direction:1}))}/></section>}
  </main></div>
- {edit&&data&&<Editor client={client} ratePresets={ratePresets} onRatePresets={setRatePresets} data={data} table={edit.table} row={edit.row} close={()=>setEdit(undefined)} onSaved={message=>{setEdit(undefined);setNotice(message);void load().catch(error=>setError(error.message));}}/>}
+ {edit&&data&&<Editor client={client} ratePresets={ratePresets} onRatePresets={setRatePresets} data={data} table={edit.table} row={edit.row} onDelete={row=>deleteRecord(edit.table,row)} close={()=>setEdit(undefined)} onSaved={message=>{setEdit(undefined);setNotice(message);void load().catch(error=>setError(error.message));}}/>}
  {profile&&<div className="modal-backdrop"><section className="modal" role="dialog" aria-modal="true" aria-label="Vehicle profile"><div className="panel-title"><h2>{numberPlate(String(profile.registration))}</h2><button autoFocus className="icon-button" onClick={()=>setProfile(undefined)} aria-label="Close profile"><X/></button></div>{profile.photo&&<img className="admin-photo" src={String(profile.photo)} alt={String(profile.name)}/>}<p>{profile.name} · {profile.status}</p><Counters values={(()=>{
  const history=entries.filter(row=>row.bus===profile.registration);return [['Operating revenue',inr(sum(history,'revenue'))],['Operating expenses',inr(sum(history,'expense'))],['Operating profit',inr(sum(history,'revenue')-sum(history,'expense'))],['Purchase value',inr(n(profile,'purchase_amount'))]];
  })()}/><Grid rows={entries.filter(row=>row.bus===profile.registration)} columns={['date','category','revenue','expense']}/><h3>TP sessions</h3><Grid rows={data?.sessions.filter(row=>row.bus===profile.registration)??[]} columns={['reference','start_date','end_date','status']}/></section></div>}
@@ -142,8 +163,8 @@ export function Dashboard({email,initialRatePresets}:{email:string;initialRatePr
 function Counters({values}:{values:readonly (readonly [string,string|number])[]}){
  return <div className="counters">{values.map(([name,value])=><div key={name}><span>{name}</span><strong>{value}</strong></div>)}</div>;
 }
-function Grid({rows,columns,onSort,onEdit,onProfile}:{rows:Row[];columns:string[];onSort?:(key:string)=>void;onEdit?:(row:Row)=>void;onProfile?:(row:Row)=>void}){
+function Grid({rows,columns,onSort,onEdit,onDelete,deleting,onProfile}:{rows:Row[];columns:string[];onSort?:(key:string)=>void;onEdit?:(row:Row)=>void;onDelete?:(row:Row)=>void;deleting?:boolean;onProfile?:(row:Row)=>void}){
  return <div className="table-scroll"><table><thead><tr>{columns.map(key=><th key={key}>{onSort?<button onClick={()=>onSort(key)}>{human(key)}</button>:human(key)}</th>)}{onEdit&&<th>Actions</th>}</tr></thead>
- <tbody>{rows.map((row,index)=><tr key={String(row.id??row.registration??index)}>{columns.map(key=><td key={key}>{key==='status'?<span className={'status '+String(row[key]).toLowerCase()}>{display(key,row[key])}</span>:key==='registration'&&onProfile?<button className="text-link" onClick={()=>onProfile(row)}>{display(key,row[key])}</button>:display(key,row[key])}</td>)}{onEdit&&<td><button className="text-link" onClick={()=>onEdit(row)}>Edit</button></td>}</tr>)}
+ <tbody>{rows.map((row,index)=><tr key={String(row.id??row.registration??index)}>{columns.map(key=><td key={key}>{key==='status'?<span className={'status '+String(row[key]).toLowerCase()}>{display(key,row[key])}</span>:key==='registration'&&onProfile?<button className="text-link" onClick={()=>onProfile(row)}>{display(key,row[key])}</button>:display(key,row[key])}</td>)}{onEdit&&<td><div className="row-actions"><button type="button" className="text-link" onClick={()=>onEdit(row)}>Edit</button>{onDelete&&<button type="button" className="text-link row-delete" disabled={deleting} onClick={()=>onDelete(row)}>Delete</button>}</div></td>}</tr>)}
  {!rows.length&&<tr><td className="empty-cell" colSpan={columns.length+(onEdit?1:0)}>No records to display.</td></tr>}</tbody></table></div>;
 }
