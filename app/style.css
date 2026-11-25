@@ -363,3 +363,31 @@
   .public-site .top .public-wordmark img { width: 120px; }
   .public-site .login-link svg:last-child { display: none; }
 }
+
+.fleet-contact {
+  padding-block: clamp(48px, 6vw, 88px);
+  border-top: 1px solid var(--showcase-line);
+  background: #080e15;
+}
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: clamp(22px, 3vw, 40px);
+}
+.contact-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--showcase-line);
+  border-radius: 5px;
+  background: #101a23;
+}
+.contact-card:hover { border-color: var(--cyan); }
+.contact-card svg { color: var(--cyan); }
+.contact-detail { display: block; margin-top: 3px; color: var(--showcase-green); overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .contact-grid { grid-template-columns: minmax(0, 1fr); }
+}

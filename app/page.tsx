@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, ArrowUpRight, BusFront } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, BusFront, Mail, MessageCircle, Phone } from 'lucide-react';
 import { Header, Wordmark } from './brand';
 import { getFleet, getContact } from '../lib/public-fleet';
 import { numberPlate, photos } from '../lib/fleet';
@@ -7,6 +7,9 @@ import { Gallery } from './gallery';
 import { FleetHero } from './fleet-hero';
 
 export const dynamic = 'force-dynamic';
+
+const phone = '+916282490768';
+const displayPhone = '+91 6282490768';
 
 const rainScenes: Record<string, string> = {
   '/fleet/ayshu-editorial.webp': 'ayshu',
@@ -23,7 +26,13 @@ function showcaseOrder(registration: string) {
 }
 
 export default async function Home() {
-  const [vehicles, contact] = await Promise.all([getFleet(), getContact()]);
+  const [vehicles, emailSetting] = await Promise.all([getFleet(), getContact()]);
+  const email = emailSetting ?? 'bazooka6282@gmail.com';
+  const contactLinks = [
+    { label: 'Call', detail: displayPhone, href: 'tel:' + phone, Icon: Phone },
+    { label: 'WhatsApp', detail: displayPhone, href: 'https://wa.me/' + phone.slice(1), Icon: MessageCircle },
+    { label: 'Email', detail: email, href: 'mailto:' + email, Icon: Mail },
+  ];
   const fleet = vehicles.slice().sort((a, b) => showcaseOrder(a.registration) - showcaseOrder(b.registration));
   const slides = fleet.flatMap(bus => {
     const photo = photos(bus)[0];
@@ -59,11 +68,23 @@ export default async function Home() {
 
       <section id="about" className="wrap fleet-story">
         <img src="/fleet/road.webp" alt="A BAZOOKA bus on a tree-lined Kerala road" loading="lazy" width={900} height={574} />
-        <div><h2>About BAZOOKA</h2><p>BAZOOKA operates a private fleet in Kerala. The buses share a blue livery, and each carries its own windshield artwork and details.</p>{contact && <a className="front-action" href={'mailto:' + contact}>Contact BAZOOKA <ArrowUpRight size={17} /></a>}</div>
+        <div><h2>About BAZOOKA</h2><p>BAZOOKA operates a private fleet in Kerala. The buses share a blue livery, and each carries its own windshield artwork and details.</p><Link className="front-action" href="#contact">Contact BAZOOKA <ArrowUpRight size={17} /></Link></div>
       </section>
 
       {shots.length > 0 && <section id="gallery" className="gallery-section"><div className="wrap"><h2>Fleet gallery</h2><Gallery shots={shots} /></div></section>}
+      <section id="contact" className="fleet-contact" aria-labelledby="contact-heading">
+        <div className="wrap">
+          <h2 id="contact-heading">Contact BAZOOKA</h2>
+          <div className="contact-grid">
+            {contactLinks.map(({ label, detail, href, Icon }) => <a className="contact-card" key={label} href={href}>
+              <Icon size={20} aria-hidden="true" />
+              <span><strong>{label}</strong><span className="contact-detail">{detail}</span></span>
+              <ArrowUpRight size={17} aria-hidden="true" />
+            </a>)}
+          </div>
+        </div>
+      </section>
     </main>
-    <footer id="contact"><div className="wrap footer"><Wordmark /><span>Private bus operations · Kerala, India</span>{contact && <a href={'mailto:' + contact}>Contact</a>}<a href="https://webappzz.com/">Powered by Webappzz Technologies</a></div></footer>
+    <footer><div className="wrap footer"><Wordmark /><span>Private bus operations · Kerala, India</span><a href="https://webappzz.com/">Powered by Webappzz Technologies</a></div></footer>
   </div>;
 }
