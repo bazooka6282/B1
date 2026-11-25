@@ -4,7 +4,7 @@ export const seed: Bus[] = [
   { registration: 'KL03P5108', name: 'Feemol', category: 'TP', photo: '/fleet/feemol.webp' },
   { registration: 'KL08AL4545', name: 'Zaeem', category: 'TP', photo: '/fleet/zaeem.webp' },
   { registration: 'KL02Y0079', name: 'Bazooka', category: 'TP', photo: '/fleet/route.webp' },
-  { registration: 'KL55G7430', name: 'Bazooka', category: 'TP', photo: null },
+  { registration: 'KL55G7430', name: 'Bazooka', category: 'TP', photo: '/fleet/kl55g7430-bazooka.webp' },
 ];
 export const numberPlate = (reg: string) => reg.replace(/^(KL\d{2})([A-Z]+)(\d+)$/, '$1 $2 $3');
 export const inr = (amount: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(amount);
@@ -26,6 +26,9 @@ const additionalOriginals: Record<string, string[]> = {
 };
 
 export function photos(bus: Bus) {
+  if (bus.registration === 'KL55G7430' && (!bus.photo || bus.photo === '/fleet/kl55g7430-bazooka.webp')) {
+    return ['/fleet/kl55g7430-bazooka.webp', '/fleet/kl55g7430-monsoon-mobile.webp'];
+  }
   if (!bus.photo) return [];
   const original = seed.find(item => item.registration === bus.registration)?.photo;
   const featured = bus.photo === original ? editorial[bus.photo] : undefined;

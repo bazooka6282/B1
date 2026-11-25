@@ -13,10 +13,18 @@ const rainScenes: Record<string, string> = {
   '/fleet/feemol-editorial.webp': 'feemol',
   '/fleet/zaeem-editorial.webp': 'zaeem',
   '/fleet/route-editorial.webp': 'route',
+  '/fleet/kl55g7430-bazooka.webp': 'kl55g7430',
 };
 
+function showcaseOrder(registration: string) {
+  if (registration === 'KL05Z2113') return 0;
+  if (registration === 'KL55G7430') return 2;
+  return 1;
+}
+
 export default async function Home() {
-  const [fleet, contact] = await Promise.all([getFleet(), getContact()]);
+  const [vehicles, contact] = await Promise.all([getFleet(), getContact()]);
+  const fleet = vehicles.slice().sort((a, b) => showcaseOrder(a.registration) - showcaseOrder(b.registration));
   const slides = fleet.flatMap(bus => {
     const photo = photos(bus)[0];
     if (!photo) return [];
@@ -27,7 +35,7 @@ export default async function Home() {
       name: bus.name,
       registration: bus.registration,
     }];
-  }).sort((a, b) => Number(b.registration === 'KL05Z2113') - Number(a.registration === 'KL05Z2113'));
+  });
   const shots = fleet.flatMap(bus => photos(bus).slice(0, 2).map(src => ({ src, name: bus.name, registration: bus.registration })));
 
   return <div className="public-site">
