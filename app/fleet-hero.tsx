@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState, type PointerEvent } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { numberPlate } from '../lib/fleet';
@@ -9,13 +9,32 @@ type Slide = { src: string; name: string; registration: string; mobileSrc?: stri
 
 export function FleetHero({ slides }: { slides: Slide[] }) {
   const [index, setIndex] = useState(0);
+  const swipeStart = useRef<{ id: number; x: number; y: number } | null>(null);
   const slide = slides[index];
   function step(direction: number) {
     setIndex(current => (current + direction + slides.length) % slides.length);
   }
 
+  function startSwipe(event: PointerEvent<HTMLElement>) {
+    if (slides.length < 2 || event.pointerType !== 'touch' || !event.isPrimary) return;
+    swipeStart.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+  }
+
+  function finishSwipe(event: PointerEvent<HTMLElement>) {
+    const start = swipeStart.current;
+    if (start?.id !== event.pointerId) return;
+    swipeStart.current = null;
+    const horizontal = event.clientX - start.x;
+    const vertical = event.clientY - start.y;
+    if (Math.abs(horizontal) >= 45 && Math.abs(horizontal) > Math.abs(vertical) * 1.4) {
+      step(horizontal < 0 ? 1 : -1);
+    }
+  }
+
   return <section id="home" className="cinema-hero" aria-label="Featured fleet">
-    {slide && <picture key={slide.src} className={slide.mobileSrc ? 'cinema-image cinematic' : 'cinema-image'}>
+    {slide && <picture key={slide.src} className={slide.mobileSrc ? 'cinema-image cinematic' : 'cinema-image'}
+      onPointerDown={startSwipe} onPointerUp={finishSwipe}
+      onPointerCancel={event => { if (swipeStart.current?.id === event.pointerId) swipeStart.current = null; }}>
       {slide.mobileSrc && <source media="(max-width: 700px)" srcSet={slide.mobileSrc} />}
       <img src={slide.src} alt={slide.name + ' · ' + numberPlate(slide.registration)} fetchPriority={index === 0 ? 'high' : 'auto'} />
     </picture>}

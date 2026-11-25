@@ -208,7 +208,7 @@
   overflow: hidden;
 }
 .cinema-image, .cinema-shade { position: absolute; inset: 0; }
-.cinema-image { left: 25%; }
+.cinema-image { left: 25%; touch-action: pan-y pinch-zoom; }
 .cinema-image.cinematic { left: 0; }
 .cinema-image img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 54%; }
 .cinema-image:not(.cinematic) img { object-position: 63% center; filter: brightness(.79); }
