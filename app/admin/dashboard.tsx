@@ -30,6 +30,8 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
  const [menu,setMenu]=useState(false);
  const [notice,setNotice]=useState('');
  const [error,setError]=useState('');
+ const [blockedSession,setBlockedSession]=useState<Row[string]>(null);
+ const [expenseSession,setExpenseSession]=useState<Row[string]>(null);
  const [edit,setEdit]=useState<{table:string;row?:Row}>();
  const [profile,setProfile]=useState<Row>();
  const [deleting,setDeleting]=useState(false);
@@ -54,7 +56,7 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
   setData(Object.fromEntries(result));
  }
  useEffect(()=>{void load().catch(error=>setError(error.message));},[]);
- function navigate(next:string){setSection(next);setMenu(false);setSearch('');setOrder({key:'',direction:1});setNotice('');}
+ function navigate(next:string){setSection(next);setMenu(false);setSearch('');setOrder({key:'',direction:1});setNotice('');setExpenseSession(null);setBlockedSession(null);}
  const table=section==='maintenance'?'expenses':section;
  const module=modules[table];
  async function deleteRecord(recordTable:string,row:Row){
@@ -64,11 +66,18 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
   if(id==null)throw new Error('The record ID could not be found. Refresh the dashboard and try again.');
   const saleNote=recordTable==='fleet_transactions'&&row.kind==='Sale'
    ? ' The vehicle will stay marked as Sold until you update it in Fleet management.' : '';
-  if(!confirm(`Delete record ${id} from ${recordModule.title}?${saleNote}`))return;
-  setDeleting(true);setError('');setNotice('');
+  const sessionNote=recordTable==='sessions'?' Linked expenses will remain on the same bus. The session revenue will be removed from reports.':'';
+  if(!confirm(`Delete record ${id} from ${recordModule.title}?${saleNote}${sessionNote}`))return;
+  setDeleting(true);setError('');setNotice('');setBlockedSession(null);
   try {
    const {data:removed,error}=await client.from(recordTable).delete().eq(recordModule.key,id).select(recordModule.key);
-   if(error?.code==='23503')throw new Error('This record is linked to other records. Remove or reassign those links before deleting it.');
+   if(error?.code==='23503'){
+    if(recordTable==='sessions'){
+     setBlockedSession(id);
+     throw new Error('This TP session has linked expenses. Open them and clear or reassign their TP session before retrying.');
+    }
+    throw new Error('This record is linked to other records. Remove or reassign those links before deleting it.');
+   }
    if(error)throw error;
    if(!removed?.length)throw new Error('The record was already removed or this account cannot delete it.');
    setEdit(undefined);
@@ -102,6 +111,7 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
   return series;
  },{})).sort(([a],[b])=>a.localeCompare(b)).map(([period,values])=>({period,...values}));
  let rows=data?.[table]??[];
+ if(table==='expenses'&&expenseSession!=null)rows=rows.filter(row=>row.session===expenseSession);
  if(section==='maintenance')rows=rows.filter(row=>data!.expense_categories.some(item=>item.maintenance&&item.name===row.category));
  rows=rows.filter(row=>Object.values(row).some(value=>String(value??'').toLowerCase().includes(search.toLowerCase()))).map(row=>{
   if(table==='sessions')return {...row,days:sessionDays(String(row.start_date),String(row.end_date)),outstanding:total(row)-n(row,'received'),profit:total(row)-sum(data!.expenses.filter(item=>item.session===row.id),'amount')};
@@ -134,7 +144,8 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
  })}</nav><button className="signout" onClick={async()=>{const result=await client.auth.signOut();if(result.error)setError(result.error.message);else location.assign('/login');}}><LogOut size={16}/>Sign out</button></aside>
  <div className="admin-main"><header className="admin-top"><button className="icon-button" aria-expanded={menu} aria-label="Toggle sidebar" onClick={()=>setMenu(!menu)}><Menu size={20}/></button><strong>Fleet operations</strong><Link href="/" className="site-preview"><Globe size={16}/>View website</Link><AccountPhoto client={client} initialPhoto={initialPhoto} email={email} /></header>
  <main className="admin-content"><div className="admin-title"><div><p className="eyebrow dark"><span/> BAZOOKA ADMIN</p><h1>{titleFor(section)}</h1></div>{module&&(table!=='website_settings'||data?.website_settings.length===0)&&<button className="button primary" disabled={!data} onClick={()=>setEdit({table})}><Plus size={18}/> Add record</button>}</div>
- {notice&&<div className="message" role="status">{notice}</div>}{error&&<div className="message error" role="alert">{error} <button className="text-link" onClick={()=>{setError('');void load().catch(error=>setError(error.message));}}>Retry</button></div>}{!data&&!error&&<div className="skeleton" role="status">Loading fleet records…</div>}
+ {notice&&<div className="message" role="status">{notice}</div>}{error&&<div className="message error" role="alert">{error} {blockedSession!=null&&section==='sessions'?<button className="text-link" onClick={()=>{navigate('expenses');setExpenseSession(blockedSession);setError('');}}>View linked expenses</button>:<button className="text-link" onClick={()=>{setError('');void load().catch(error=>setError(error.message));}}>Retry</button>}</div>}{!data&&!error&&<div className="skeleton" role="status">Loading fleet records…</div>}
+ {section==='expenses'&&expenseSession!=null&&<div className="message">Expenses linked to TP session {expenseSession}. <button className="text-link" onClick={()=>navigate('sessions')}>Back to TP sessions</button> · <button className="text-link" onClick={()=>setExpenseSession(null)}>Show all expenses</button></div>}
  {data&&['overview','company','reports'].includes(section)&&<><div className="filters">
  <label className="field">Period<select defaultValue="" onChange={event=>setPeriod(event.target.value)}><option value="">All time</option><option>Today</option><option>This week</option><option>This month</option><option>This year</option><option>Custom</option></select></label>
  <label className="field">From<input type="date" value={from} onChange={event=>setFrom(event.target.value)}/></label>
