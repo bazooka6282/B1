@@ -2,14 +2,66 @@
 import { useState,type FormEvent } from 'react';
 import { X } from 'lucide-react';
 import { browserClient } from '../../lib/browser';
-import { numberPlate } from '../../lib/fleet';
-import { modules,today,type Data,type Row } from './modules';
+import { inr,numberPlate } from '../../lib/fleet';
+import { modules,sessionDays,today,type Data,type Row } from './modules';
 
-export function Editor({client,data,table,row,close,onSaved}:{client:ReturnType<typeof browserClient>;data:Data;table:string;row?:Row;close:()=>void;onSaved:(message:string)=>void}){
+const defaultDailyRates=[1800,2000];
+const rateMetadataKey='tp_daily_revenue_rates';
+const maxRevenue=999999999999.99;
+
+function validDailyRate(value: unknown): value is number {
+ return typeof value==='number'&&Number.isFinite(value)&&value>0&&value<=maxRevenue&&Number(value.toFixed(2))===value;
+}
+
+function dailyRateOptions(stored: unknown) {
+ const custom=Array.isArray(stored)?stored.filter(validDailyRate):[];
+ return [...new Set([...defaultDailyRates,...custom])].sort((a,b)=>a-b);
+}
+
+export function Editor({client,data,table,row,close,onSaved,ratePresets,onRatePresets}:{client:ReturnType<typeof browserClient>;data:Data;table:string;row?:Row;close:()=>void;onSaved:(message:string)=>void;ratePresets:unknown;onRatePresets:(rates:number[])=>void}){
  const config=modules[table];
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
  const [values,setValues]=useState<Row>(row??{});
+ const tpSession=table==='sessions';
+ const dailyRates=dailyRateOptions(ratePresets);
+ const [savingRate,setSavingRate]=useState(false);
+ const [dailyRate,setDailyRate]=useState('');
+ const [newRate,setNewRate]=useState('');
+ const [showNewRate,setShowNewRate]=useState(false);
+ const [rateError,setRateError]=useState('');
+ const startDate=String(values.start_date??today());
+ const endDate=String(values.end_date??today());
+ const days=sessionDays(startDate,endDate);
+ const calculatedRevenue=days&&dailyRate ? Math.round(Number(dailyRate)*100)*days/100 : 0;
+ async function addDailyRate() {
+  if(savingRate)return;
+  const amount=Number(newRate);
+  if(!validDailyRate(amount)){
+   setRateError('Enter a positive amount with up to two decimal places.');
+   return;
+  }
+  setSavingRate(true);
+  setRateError('');
+  try {
+   const user=await client.auth.getUser();
+   if(user.error)throw user.error;
+   const latest=dailyRateOptions(user.data.user?.user_metadata[rateMetadataKey]);
+   const next=[...new Set([...latest,...dailyRates,amount])].sort((a,b)=>a-b).filter(rate=>!defaultDailyRates.includes(rate));
+   const result=await client.auth.updateUser({data:{[rateMetadataKey]:next}});
+   if(result.error)throw result.error;
+   onRatePresets(next);
+  }catch(error){
+   setRateError('Could not save the preset. '+(error as Error).message);
+   return;
+  }finally{
+   setSavingRate(false);
+  }
+  setDailyRate(String(amount));
+  setNewRate('');
+  setRateError('');
+  setShowNewRate(false);
+ }
  const locked=(key:string)=>Boolean(row&&(key===config.key||table==='fleet_transactions'&&['bus','kind'].includes(key)));
  function options(type:string,key:string):string[][]|null{
   if(type.includes('|'))return type.split('|').map(item=>[item,item]);
@@ -22,7 +74,12 @@ export function Editor({client,data,table,row,close,onSaved}:{client:ReturnType<
  }
  async function submit(event:FormEvent<HTMLFormElement>){
   event.preventDefault();
-  if(busy||((row||table==='fleet_transactions')&&!confirm('Save these changes?')))return;
+  if(busy)return;
+  if(tpSession&&(!days||(dailyRate&&calculatedRevenue>maxRevenue))){
+   setError(days?'The calculated revenue exceeds the allowed amount.':'The end date must be on or after the start date.');
+   return;
+  }
+  if((row||table==='fleet_transactions')&&!confirm('Save these changes?'))return;
   const form=new FormData(event.currentTarget);
   setBusy(true);setError('');
   try{
@@ -68,12 +125,28 @@ export function Editor({client,data,table,row,close,onSaved}:{client:ReturnType<
   const value=String(values[key]??(type==='money'&&required?'0':type==='date'&&required?today():''));
   const list=options(type,key);
   const props={name:key,required,disabled:locked(key)};
+  if(tpSession&&key==='amount')return <div className="tp-rate-fields" key={key}>
+   <div className="tp-rate-main">
+    <label className="field">Daily revenue rate (₹)<select value={dailyRate} onChange={event=>setDailyRate(event.target.value)}>
+     <option value="">Enter agreed total manually</option>
+     {dailyRates.map(rate=><option key={rate} value={rate}>{inr(rate)} per day</option>)}
+    </select></label>
+    <button type="button" className="button secondary" aria-expanded={showNewRate} onClick={()=>{setRateError('');setShowNewRate(!showNewRate);}}>{showNewRate?'Cancel new rate':'Add daily rate'}</button>
+   </div>
+   {showNewRate&&<div className="tp-rate-main">
+    <label className="field">New daily rate (₹)<input type="number" step="0.01" min="0.01" inputMode="decimal" value={newRate} onChange={event=>setNewRate(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'){event.preventDefault();addDailyRate();}}}/></label>
+    <button type="button" className="button secondary" disabled={savingRate} onClick={addDailyRate}>{savingRate?'Saving rate…':'Save rate'}</button>
+   </div>}
+   {rateError&&<p role="alert" className="message error">{rateError}</p>}
+   <label className="field">{label}<input {...props} type="number" step="0.01" min="0" max={maxRevenue} readOnly={Boolean(dailyRate)} value={dailyRate?String(calculatedRevenue):value} onChange={event=>setValues(current=>({...current,amount:event.target.value}))}/></label>
+   {dailyRate&&<p className="tp-rate-note" aria-live="polite">{days?`${inr(Number(dailyRate))} × ${days} ${days===1?'day':'days'} (start and end dates included) = ${inr(calculatedRevenue)}`:'Choose an end date on or after the start date.'}</p>}
+  </div>;
   if(type==='checkbox')return <label className="check" key={key}><input type="checkbox" name={key} defaultChecked={Boolean(row?.[key]??(key==='active'))}/>{label}</label>;
   return <label className="field" key={key}>{label}{list?
    <select {...props} value={value} onChange={event=>setValues({...values,[key]:event.target.value,...(key==='bus'?{session:null,...(table==='daily_accounts'?{route:null}:{})}:{})})}><option value="">{required?'Select':'None'}</option>{list.map(([id,name])=><option value={id} key={id}>{name}</option>)}</select>:
+   tpSession&&(key==='start_date'||key==='end_date')?<input {...props} type="date" value={key==='start_date'?startDate:endDate} min={key==='end_date'?startDate||undefined:undefined} onChange={event=>setValues(current=>({...current,[key]:event.target.value}))}/>:
    key==='notes'?<textarea {...props} defaultValue={value}/>:
    type==='document'||type==='photo'?<><input {...props} type="file" accept={type==='photo'?'image/jpeg,image/png,image/webp':'application/pdf,image/jpeg,image/png,image/webp'}/>{type==='document'&&row?.[key]&&<button className="text-link" type="button" onClick={async()=>{const {data,error}=await client.storage.from('fleet-documents').createSignedUrl(String(row[key]),60);if(error)setError(error.message);else location.assign(data.signedUrl);}}>Open attached document</button>}</>:
    <input {...props} type={type==='money'?'number':type} defaultValue={value} min={type==='money'||type==='number'?0:undefined} step={type==='money'||key==='quantity'?'0.01':undefined}/>}</label>;
  })}</div>{error&&<div className="message error" role="alert">{error}</div>}<div className="modal-actions">{row&&config.remove&&<button className="danger" type="button" onClick={remove} disabled={busy}>Delete record</button>}<button className="button secondary" type="button" onClick={close} disabled={busy}>Cancel</button><button className="button primary" disabled={busy}>{busy?'Saving…':'Save record'}</button></div></form></section></div>;
 }
-

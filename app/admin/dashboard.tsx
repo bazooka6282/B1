@@ -6,7 +6,7 @@ import { Bar,BarChart,CartesianGrid,ResponsiveContainer,Tooltip,XAxis,YAxis } fr
 import { Brand } from '../brand';
 import { browserClient } from '../../lib/browser';
 import { inr,numberPlate } from '../../lib/fleet';
-import { modules,today,n,total,dailyCost,payments,ledger,sum,type Data,type Row } from './modules';
+import { modules,today,sessionDays,n,total,dailyCost,payments,ledger,sum,type Data,type Row } from './modules';
 import { Editor } from './editor';
 
 const sections=['overview','buses','sessions','routes','daily_accounts','revenue','revenue_payments','expenses','maintenance','expense_categories','fleet_transactions','company','reports','website_settings','notifications'];
@@ -21,8 +21,9 @@ function display(key:string,value:Row[string]){
  if(/^\d{4}-\d\d-\d\d$/.test(String(value)))return String(value).split('-').reverse().join('/');
  return String(value);
 }
-export function Dashboard({email}:{email:string}){
+export function Dashboard({email,initialRatePresets}:{email:string;initialRatePresets:unknown}){
  const [client]=useState(browserClient);
+ const [ratePresets,setRatePresets]=useState(initialRatePresets);
  const [data,setData]=useState<Data>();
  const [section,setSection]=useState('overview');
  const [menu,setMenu]=useState(false);
@@ -81,7 +82,7 @@ export function Dashboard({email}:{email:string}){
  let rows=data?.[table]??[];
  if(section==='maintenance')rows=rows.filter(row=>data!.expense_categories.some(item=>item.maintenance&&item.name===row.category));
  rows=rows.filter(row=>Object.values(row).some(value=>String(value??'').toLowerCase().includes(search.toLowerCase()))).map(row=>{
-  if(table==='sessions')return {...row,days:(Date.parse(String(row.end_date))-Date.parse(String(row.start_date)))/86400000+1,outstanding:total(row)-n(row,'received'),profit:total(row)-sum(data!.expenses.filter(item=>item.session===row.id),'amount')};
+  if(table==='sessions')return {...row,days:sessionDays(String(row.start_date),String(row.end_date)),outstanding:total(row)-n(row,'received'),profit:total(row)-sum(data!.expenses.filter(item=>item.session===row.id),'amount')};
   if(table==='daily_accounts')return {...row,amount:total(row),profit:total(row)-dailyCost(row)};
   if(table==='revenue')return {...row,received:payments(data!,row),outstanding:n(row,'amount')-payments(data!,row)};
   return row;
@@ -132,7 +133,7 @@ export function Dashboard({email}:{email:string}){
  {data&&section==='notifications'&&<section className="panel"><div className="panel-title"><h2>Document and permit reminders</h2></div><Grid rows={reminders.sort((a,b)=>String(a.date).localeCompare(String(b.date)))} columns={['date','bus','detail']}/></section>}
  {data&&module&&<section className="panel"><div className="panel-title"><h2>{rows.length} {rows.length===1?'record':'records'}</h2><input type="search" aria-label="Search records" placeholder="Search records" value={search} onChange={event=>setSearch(event.target.value)}/></div><Grid rows={rows} columns={module.columns} onEdit={row=>setEdit({table,row})} onProfile={table==='buses'?setProfile:undefined} onSort={key=>setOrder(previous=>({key,direction:previous.key===key?-previous.direction:1}))}/></section>}
  </main></div>
- {edit&&data&&<Editor client={client} data={data} table={edit.table} row={edit.row} close={()=>setEdit(undefined)} onSaved={message=>{setEdit(undefined);setNotice(message);void load().catch(error=>setError(error.message));}}/>}
+ {edit&&data&&<Editor client={client} ratePresets={ratePresets} onRatePresets={setRatePresets} data={data} table={edit.table} row={edit.row} close={()=>setEdit(undefined)} onSaved={message=>{setEdit(undefined);setNotice(message);void load().catch(error=>setError(error.message));}}/>}
  {profile&&<div className="modal-backdrop"><section className="modal" role="dialog" aria-modal="true" aria-label="Vehicle profile"><div className="panel-title"><h2>{numberPlate(String(profile.registration))}</h2><button autoFocus className="icon-button" onClick={()=>setProfile(undefined)} aria-label="Close profile"><X/></button></div>{profile.photo&&<img className="admin-photo" src={String(profile.photo)} alt={String(profile.name)}/>}<p>{profile.name} · {profile.status}</p><Counters values={(()=>{
  const history=entries.filter(row=>row.bus===profile.registration);return [['Operating revenue',inr(sum(history,'revenue'))],['Operating expenses',inr(sum(history,'expense'))],['Operating profit',inr(sum(history,'revenue')-sum(history,'expense'))],['Purchase value',inr(n(profile,'purchase_amount'))]];
  })()}/><Grid rows={entries.filter(row=>row.bus===profile.registration)} columns={['date','category','revenue','expense']}/><h3>TP sessions</h3><Grid rows={data?.sessions.filter(row=>row.bus===profile.registration)??[]} columns={['reference','start_date','end_date','status']}/></section></div>}

@@ -22,6 +22,10 @@ export const modules:Record<string,{title:string; key:string; fields:Field[]; co
  website_settings:{title:'Website & reminders',key:'id',columns:['contact_email','reminder_days'],fields:[['contact_email','Public contact email','optional-email'],['reminder_days','Reminder days','number']]},
 };
 export type Data = Record<string,Row[]>;
+export function sessionDays(startDate: string, endDate: string) {
+ const difference=Date.parse(endDate)-Date.parse(startDate);
+ return difference>=0 ? difference/86400000+1 : 0;
+}
 export const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());
 export const n=(row:Row,key:string)=>Number(row[key]??0);
 export const total=(row:Row)=>n(row,'amount')+n(row,'additional');
