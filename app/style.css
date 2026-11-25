@@ -371,7 +371,8 @@
   }
   .cinema-progress p { font-size: .77rem; }
   .cinema-progress strong { color: var(--cyan); }
-  .cinema-dots button { width: clamp(18px, 6vw, 28px); }
+  .cinema-dots, .cinema-arrows { gap: 5px; }
+  .cinema-dots button { width: clamp(16px, 5vw, 24px); }
   .cinema-arrows button { width: 44px; height: 44px; }
   .cinema-fleet-title h2::before { width: 18px; }
   .cinema-fleet-title h2, .cinema-fleet-title a { gap: 8px; }
