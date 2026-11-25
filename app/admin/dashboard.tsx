@@ -6,14 +6,14 @@ import { Bar,BarChart,CartesianGrid,ResponsiveContainer,Tooltip,XAxis,YAxis } fr
 import { Brand } from '../brand';
 import { browserClient } from '../../lib/browser';
 import { inr,numberPlate } from '../../lib/fleet';
-import { modules,today,sessionDays,n,total,dailyCost,payments,ledger,sum,type Data,type Row } from './modules';
+import { modules,today,sessionDays,fleetTpDates,n,total,dailyCost,payments,ledger,sum,type Data,type Row } from './modules';
 import { Editor } from './editor';
 import { AccountPhoto } from './account-photo';
 
 const sections=['overview','buses','sessions','routes','daily_accounts','revenue','revenue_payments','expenses','maintenance','expense_categories','fleet_transactions','company','reports','website_settings','notifications'];
 const titles:Record<string,string>={overview:'Overview',maintenance:'Spare parts & maintenance',company:'Company accounts',reports:'Reports',notifications:'Notifications'};
 const titleFor=(section:string)=>modules[section]?.title ?? titles[section];
-const human=(key:string)=>key.replaceAll('_',' ').replace(/^./,letter=>letter.toUpperCase());
+const human=(key:string)=>key.replaceAll('_',' ').replace(/^tp\b/,'TP').replace(/^./,letter=>letter.toUpperCase());
 function display(key:string,value:Row[string]){
  if(value===null || value===undefined || value==='')return '—';
  if(typeof value==='boolean')return value?'Yes':'No';
@@ -111,6 +111,10 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
   return series;
  },{})).sort(([a],[b])=>a.localeCompare(b)).map(([period,values])=>({period,...values}));
  let rows=data?.[table]??[];
+ if(table==='buses'&&data){
+  const date=today();
+  rows=rows.map(row=>({...row,...fleetTpDates(row,data.sessions,date)}));
+ }
  if(table==='expenses'&&expenseSession!=null)rows=rows.filter(row=>row.session===expenseSession);
  if(section==='maintenance')rows=rows.filter(row=>data!.expense_categories.some(item=>item.maintenance&&item.name===row.category));
  rows=rows.filter(row=>Object.values(row).some(value=>String(value??'').toLowerCase().includes(search.toLowerCase()))).map(row=>{

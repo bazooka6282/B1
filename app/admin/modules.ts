@@ -5,7 +5,7 @@ const date:Field=['date','Date','date'];
 const notes:Field=['notes','Notes','optional'];
 const amount:Field=['amount','Amount (₹)','money'];
 export const modules:Record<string,{title:string; key:string; fields:Field[]; columns:string[]}> = {
- buses:{title:'Fleet management',key:'registration',columns:['registration','name','category','status','visible'],fields:[
+ buses:{title:'Fleet management',key:'registration',columns:['registration','name','category','tp_start_date','tp_end_date','status','visible'],fields:[
   ['registration','Registration'],['name','Display name'],['category','Permit category','TP|Regular'],['status','Vehicle status','Active|Inactive|Maintenance|Sold'],
   ['visible','Show on website','checkbox'],['photo','Vehicle photo','photo'],['manufacturer','Manufacturer','optional'],['model','Model','optional'],['year','Manufacturing year','optional-number'],
   ['purchase_date','Purchase date','optional-date'],['purchase_amount','Purchase value (₹)','money'],['insurance_expiry','Insurance expiry','optional-date'],['fitness_expiry','Fitness expiry','optional-date'],['tax_expiry','Road tax expiry','optional-date'],['permit_expiry','Permit expiry','optional-date'],notes]},
@@ -27,6 +27,16 @@ export function sessionDays(startDate: string, endDate: string) {
  return difference>=0 ? difference/86400000+1 : 0;
 }
 export const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());
+export function fleetTpDates(vehicle: Row, sessions: Row[], date: string) {
+ const matching = vehicle.category === 'TP'
+  ? sessions.filter(session => session.bus === vehicle.registration && session.status !== 'Cancelled')
+  : [];
+ matching.sort((a,b) => String(a.start_date).localeCompare(String(b.start_date)) || String(a.end_date).localeCompare(String(b.end_date)));
+ const current = matching.findLast(session => String(session.start_date) <= date && String(session.end_date) >= date);
+ const next = matching.find(session => String(session.start_date) > date);
+ const selected = current ?? next ?? matching.at(-1);
+ return {tp_start_date:selected?.start_date??null,tp_end_date:selected?.end_date??null};
+}
 export const n=(row:Row,key:string)=>Number(row[key]??0);
 export const total=(row:Row)=>n(row,'amount')+n(row,'additional');
 export const dailyCost=(row:Row)=>['diesel','driver','conductor','maintenance','other'].reduce((sum,key)=>sum+n(row,key),0);
