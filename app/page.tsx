@@ -89,7 +89,7 @@ export default async function Home() {
       </section>
 
       <section id="about" className="wrap fleet-story">
-        <img src="/fleet/road.webp" alt="A BAZOOKA bus on a tree-lined Kerala road" loading="lazy" width={900} height={574} />
+        <img src="/fleet/road-cleared.webp" alt="A BAZOOKA bus on a tree-lined Kerala road" loading="lazy" width={1440} height={960} />
         <div><h2>About BAZOOKA</h2><p>BAZOOKA operates a private fleet in Kerala. The buses share a blue livery, and each carries its own windshield artwork and details.</p><Link className="front-action" href="#contact">Contact BAZOOKA <ArrowUpRight size={17} /></Link></div>
       </section>
 

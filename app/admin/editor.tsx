@@ -24,6 +24,7 @@ export function Editor({client,data,table,row,close,onSaved,onDelete,ratePresets
  const [error,setError]=useState('');
  const [values,setValues]=useState<Row>(row??{});
  const tpSession=table==='sessions';
+ const existingDocument=table==='expenses'?row?.receipt:table==='fleet_transactions'?row?.document:null;
  const dailyRates=dailyRateOptions(ratePresets);
  const [savingRate,setSavingRate]=useState(false);
  const [dailyRate,setDailyRate]=useState('');
@@ -88,13 +89,13 @@ export function Editor({client,data,table,row,close,onSaved,onDelete,ratePresets
     if(locked(key))continue;
     const type=raw.replace(/^optional-?/,'')||'text';
     const value=form.get(key);
-    if(type==='photo'||type==='document'){
+    if(type==='photo'){
      if(!(value instanceof File)||!value.size)continue;
-     const bucket=type==='photo'?'fleet-photos':'fleet-documents';
+     const bucket=client.storage.from('fleet-photos');
      const path=crypto.randomUUID()+'/'+value.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-     const {error}=await client.storage.from(bucket).upload(path,value);
+     const {error}=await bucket.upload(path,value);
      if(error)throw error;
-     draft[key]=type==='photo'?client.storage.from(bucket).getPublicUrl(path).data.publicUrl:path;
+     draft[key]=bucket.getPublicUrl(path).data.publicUrl;
     }else if(type==='checkbox')draft[key]=value==='on';
     else if(!String(value??'').trim())draft[key]=null;
     else if(['money','number','session','route','revenue'].includes(type))draft[key]=Number(value);
@@ -120,7 +121,7 @@ export function Editor({client,data,table,row,close,onSaved,onDelete,ratePresets
  <div className="panel-title"><h2 id="edit-heading">{row?'Edit record':'Add record'} <small>{config.title}</small></h2><button autoFocus className="icon-button" disabled={busy} onClick={close} aria-label="Close form"><X/></button></div>
  <form onSubmit={submit}><div className="form-grid">{config.fields.map(([key,label,raw='text'])=>{
   const type=raw.replace(/^optional-?/,'')||'text';
-  const required=!raw.startsWith('optional')&&!['checkbox','photo','document'].includes(type);
+  const required=!raw.startsWith('optional')&&!['checkbox','photo'].includes(type);
   const value=String(values[key]??(type==='money'&&required?'0':type==='date'&&required?today():''));
   const list=options(type,key);
   const props={name:key,required,disabled:locked(key)};
@@ -145,7 +146,13 @@ export function Editor({client,data,table,row,close,onSaved,onDelete,ratePresets
    <select {...props} value={value} onChange={event=>setValues({...values,[key]:event.target.value,...(key==='bus'?{session:null,...(table==='daily_accounts'?{route:null}:{})}:{})})}><option value="">{required?'Select':'None'}</option>{list.map(([id,name])=><option value={id} key={id}>{name}</option>)}</select>:
    tpSession&&(key==='start_date'||key==='end_date')?<input {...props} type="date" value={key==='start_date'?startDate:endDate} min={key==='end_date'?startDate||undefined:undefined} onChange={event=>setValues(current=>({...current,[key]:event.target.value}))}/>:
    key==='notes'?<textarea {...props} defaultValue={value}/>:
-   type==='document'||type==='photo'?<><input {...props} type="file" accept={type==='photo'?'image/jpeg,image/png,image/webp':'application/pdf,image/jpeg,image/png,image/webp'}/>{type==='document'&&row?.[key]&&<button className="text-link" type="button" onClick={async()=>{const {data,error}=await client.storage.from('fleet-documents').createSignedUrl(String(row[key]),60);if(error)setError(error.message);else location.assign(data.signedUrl);}}>Open attached document</button>}</>:
+   type==='photo'?<input {...props} type="file" accept="image/jpeg,image/png,image/webp"/>:
    <input {...props} type={type==='money'?'number':type} defaultValue={value} min={type==='money'||type==='number'?0:undefined} step={type==='money'||key==='quantity'?'0.01':undefined}/>}</label>;
- })}</div>{error&&<div className="message error" role="alert">{error}</div>}<div className="modal-actions">{row&&<button className="danger" type="button" onClick={remove} disabled={busy}>Delete record</button>}<button className="button secondary" type="button" onClick={close} disabled={busy}>Cancel</button><button className="button primary" disabled={busy}>{busy?'Saving…':'Save record'}</button></div></form></section></div>;
+ })}</div>
+ {existingDocument&&<button className="text-link existing-document" type="button" onClick={async()=>{
+  const {data,error}=await client.storage.from('fleet-documents').createSignedUrl(String(existingDocument),60);
+  if(error)setError(error.message);
+  else location.assign(data.signedUrl);
+ }}>Open existing attachment</button>}
+ {error&&<div className="message error" role="alert">{error}</div>}<div className="modal-actions">{row&&<button className="danger" type="button" onClick={remove} disabled={busy}>Delete record</button>}<button className="button secondary" type="button" onClick={close} disabled={busy}>Cancel</button><button className="button primary" disabled={busy}>{busy?'Saving…':'Save record'}</button></div></form></section></div>;
 }
