@@ -157,10 +157,11 @@
   .public-site .wrap { width: calc(100% - 32px); }
   .public-site .top nav a { display: flex; align-items: center; min-height: 40px; }
   .public-site .front { padding-top: 25px; }
-  .public-site .fleet-grid { grid-template-columns: minmax(0, 1fr); }
-  .public-site .vehicle-info { padding: 14px; }
-  .public-site .vehicle-info svg { display: block; }
-  .public-site .vehicle-info small { font-size: .76rem; }
+  .public-site .fleet-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .public-site .vehicle-info { padding: 10px; }
+  .public-site .vehicle-info svg { display: block; flex: 0 0 15px; width: 15px; }
+  .public-site .vehicle-info small { font-size: .65rem; letter-spacing: .025em; }
+  .public-site .vehicle-info span { font-size: .75rem; }
   .public-site .footer { align-items: flex-start; flex-direction: column; }
   .vehicle-profile header { flex-wrap: wrap; }
   .vehicle-profile .back-link { margin-bottom: 24px; }
@@ -305,7 +306,14 @@
   .cinema-copy { max-width: 53%; }
 }
 @media (max-width: 800px) {
-  .public-site .site-head-overlay { position: relative; background: #050a10; border-bottom: 1px solid #ffffff24; }
+  .public-site .site-head {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: #050a10;
+    border-bottom: 1px solid #ffffff24;
+  }
+  .public-site :is(section[id], #fleet-list, footer[id]) { scroll-margin-top: 120px; }
   .public-site .top { flex-wrap: wrap; gap: 5px 16px; padding-block: 10px 4px; }
   .public-site .top nav { order: 3; width: 100%; justify-content: space-between; gap: 5px; border-top: 0; padding-top: 0; }
   .public-site .top nav a { min-height: 43px; }
@@ -348,4 +356,10 @@
 .tp-rate-note { color: var(--muted); font-size: .85rem; margin: 0; }
 @media (max-width: 390px) {
   .tp-rate-main { grid-template-columns: minmax(0, 1fr); justify-items: stretch; }
+}
+
+@media (max-width: 360px) {
+  .public-site .top { column-gap: 8px; }
+  .public-site .top .public-wordmark img { width: 120px; }
+  .public-site .login-link svg:last-child { display: none; }
 }
