@@ -1,7 +1,6 @@
 'use client';
 import { useState, type FormEvent } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { browserClient } from '../../lib/browser';
 
 export function SignIn({ configured }: { configured: boolean }) {
@@ -26,9 +25,7 @@ export function SignIn({ configured }: { configured: boolean }) {
     finally { setBusy(false); }
   }
   return <form onSubmit={submit}>
-    <Link className="text-link login-back" href="/"><ArrowLeft size={17} aria-hidden="true" /> Back to BAZOOKA</Link>
     <div className="login-heading">
-      <span className="login-mark"><ShieldCheck size={25} aria-hidden="true" /></span>
       <h1>{reset ? 'Reset password' : 'Admin sign in'}</h1>
       <p>{reset ? 'Enter the email address for your account.' : 'Manage your fleet, trips, and accounts.'}</p>
     </div>

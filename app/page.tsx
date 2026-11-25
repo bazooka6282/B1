@@ -12,6 +12,7 @@ const phone = '+916282490768';
 const displayPhone = '+91 6282490768';
 const whatsapp = 'https://wa.me/' + phone.slice(1);
 const tpMessage = 'Hello BAZOOKA, I would like to enquire about TP bus service.\nTrip dates:\nPickup location:\nDestination:\nPassenger count:';
+const whatsappEnquiry = whatsapp + '?text=' + encodeURIComponent(tpMessage);
 
 const rainScenes: Record<string, string> = {
   '/fleet/ayshu-editorial.webp': 'ayshu',
@@ -32,7 +33,7 @@ export default async function Home() {
   const email = emailSetting ?? 'bazooka6282@gmail.com';
   const contactLinks = [
     { label: 'Call', detail: displayPhone, href: 'tel:' + phone, Icon: Phone },
-    { label: 'WhatsApp', detail: displayPhone, href: whatsapp, Icon: MessageCircle },
+    { label: 'WhatsApp', detail: displayPhone, href: whatsappEnquiry, Icon: MessageCircle },
     { label: 'Email', detail: email, href: 'mailto:' + email, Icon: Mail },
   ];
   const fleet = vehicles.slice().sort((a, b) => showcaseOrder(a.registration) - showcaseOrder(b.registration));
@@ -77,7 +78,7 @@ export default async function Home() {
             <h2 id="tp-heading">Temporary permit (TP) bus services</h2>
             <p className="tp-description">BAZOOKA provides private bus services under temporary permits. Share your trip dates, pickup location, destination, and passenger count so we can confirm what’s available for your trip.</p>
             <div className="tp-actions">
-              <a className="front-action" href={whatsapp + '?text=' + encodeURIComponent(tpMessage)}><MessageCircle size={18} aria-hidden="true" /> Enquire on WhatsApp</a>
+              <a className="front-action" href={whatsappEnquiry}><MessageCircle size={18} aria-hidden="true" /> Enquire on WhatsApp</a>
               <a className="tp-call" href={'tel:' + phone}><Phone size={18} aria-hidden="true" /> Call {displayPhone}</a>
             </div>
           </div>
@@ -108,7 +109,7 @@ export default async function Home() {
       </section>
     </main>
     <footer><div className="wrap footer"><Wordmark /><span>Private bus operations · Kerala, India</span><a href="https://webappzz.com/">Powered by Webappzz Technologies</a></div></footer>
-    <a className="floating-whatsapp" href={whatsapp} aria-label="Chat with BAZOOKA on WhatsApp">
+    <a className="floating-whatsapp" href={whatsappEnquiry} aria-label="Chat with BAZOOKA on WhatsApp">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M12 2a10 10 0 0 0-8.63 15.06L2 22l5.09-1.33A10 10 0 1 0 12 2zm0 18.3a8.3 8.3 0 0 1-4.64-1.42l-2.95.77.79-2.86A8.3 8.3 0 1 1 12 20.3z" />
         <path d="M8.6 7.35c-.24 0-.56.08-.85.4-.29.32-1.02 1-1.02 2.41 0 1.42 1.05 2.8 1.19 2.99.15.2 2.06 3.12 4.99 4.25 2.44.94 2.94.75 3.47.7.53-.05 1.73-.7 1.97-1.37.24-.67.24-1.25.17-1.37-.07-.12-.26-.2-.55-.34l-1.98-.94c-.26-.1-.45-.15-.64.14-.19.29-.74.94-.9 1.13-.17.2-.34.22-.63.08-.28-.14-1.2-.44-2.28-1.4-.84-.75-1.4-1.67-1.56-1.96-.17-.29-.02-.44.13-.58.13-.13.29-.34.43-.51.14-.17.19-.29.29-.48.09-.19.04-.36-.03-.51l-.88-2.13c-.22-.55-.45-.51-.63-.52h-.69z" />
