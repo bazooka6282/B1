@@ -10,7 +10,7 @@ export const modules:Record<string,{title:string; key:string; fields:Field[]; co
   ['visible','Show on website','checkbox'],['photo','Vehicle photo','photo'],['manufacturer','Manufacturer','optional'],['model','Model','optional'],['year','Manufacturing year','optional-number'],
   ['purchase_date','Purchase date','optional-date'],['purchase_amount','Purchase value (₹)','money'],['insurance_expiry','Insurance expiry','optional-date'],['fitness_expiry','Fitness expiry','optional-date'],['tax_expiry','Road tax expiry','optional-date'],['permit_expiry','Permit expiry','optional-date'],notes]},
  sessions:{title:'TP sessions',key:'id',columns:['bus','reference','tp_vehicle_number','start_date','end_date','days','status','approved_days','approved_revenue','profit'],fields:[
-  ['bus','Fleet vehicle','bus'],['reference','TP vehicle name'],['tp_vehicle_number','TP vehicle number','optional'],['start_date','Start date','date'],['end_date','End date','date'],['route','Route or trip'],['operator','Operator','optional'],['status','Session status','Upcoming|Active|Completed|Cancelled'],
+  ['bus','Fleet vehicle','bus'],['reference','Receiving TP vehicle name'],['tp_vehicle_number','Receiving TP vehicle number','optional'],['start_date','Start date','date'],['end_date','End date','date'],['route','Route or trip'],['operator','Operator','optional'],['status','Session status','Upcoming|Active|Completed|Cancelled'],
   ['amount','Agreed revenue (₹)','money'],notes]},
  routes:{title:'Regular permit routes',key:'id',columns:['bus','name','origin','destination','status'],fields:[bus,['name','Route name'],['origin','Origin'],['destination','Destination'],['permit','Permit number','optional'],['permit_expiry','Permit expiry','optional-date'],['driver','Driver','optional'],['conductor','Conductor','optional'],['trips','Daily trips','optional-number'],['status','Operating status','Active|Inactive']]},
  daily_accounts:{title:'Daily accounts',key:'id',columns:['date','bus','route','amount','profit'],fields:[date,bus,['route','Route','route'],['amount','Ticket collection (₹)','money'],['additional','Additional revenue (₹)','money'],['diesel','Diesel (₹)','money'],['driver','Driver wages (₹)','money'],['conductor','Conductor wages (₹)','money'],['maintenance','Maintenance (₹)','money'],['other','Other expenses (₹)','money'],notes]},
@@ -50,6 +50,11 @@ export const n=(row:Row,key:string)=>Number(row[key]??0);
 export const total=(row:Row)=>n(row,'amount')+n(row,'additional');
 export const dailyCost=(row:Row)=>['diesel','driver','conductor','maintenance','other'].reduce((sum,key)=>sum+n(row,key),0);
 export const payments=(data:Data,row:Row)=>data.revenue_payments.filter(payment=>payment.revenue===row.id).reduce((sum,payment)=>sum+n(payment,'amount'),0);
+export function tpRecipientKey(row:Row) {
+ const name=String(row.tp_vehicle_name??'').trim().toLowerCase();
+ const number=String(row.tp_vehicle_number??'').replace(/\s+/g,'').toUpperCase();
+ return JSON.stringify([name,number]);
+}
 export function approvedTpRevenue(data:Data) {
  const sessions = new Map(data.sessions.map(session=>[session.id,session]));
  return (data.tp_daily_approvals??[]).flatMap(approval=>{

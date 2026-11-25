@@ -6,7 +6,7 @@ import { Bar,BarChart,CartesianGrid,ResponsiveContainer,Tooltip,XAxis,YAxis } fr
 import { Brand } from '../brand';
 import { browserClient } from '../../lib/browser';
 import { inr,numberPlate } from '../../lib/fleet';
-import { modules,today,sessionDays,fleetTpDates,n,total,dailyCost,payments,approvedTpRevenue,ledger,sum,type Data,type Row } from './modules';
+import { modules,today,sessionDays,fleetTpDates,n,total,dailyCost,payments,approvedTpRevenue,tpRecipientKey,ledger,sum,type Data,type Row } from './modules';
 import { Editor } from './editor';
 import { AccountPhoto } from './account-photo';
 import { TpApprovals } from './tp-approvals';
@@ -14,7 +14,7 @@ import { TpApprovals } from './tp-approvals';
 const sections=['overview','buses','sessions','daily_approvals','routes','daily_accounts','revenue','revenue_payments','expenses','maintenance','expense_categories','fleet_transactions','company','reports','website_settings','notifications'];
 const titles:Record<string,string>={overview:'Overview',daily_approvals:'Daily approvals',maintenance:'Spare parts & maintenance',company:'Company accounts',reports:'Reports',notifications:'Notifications'};
 const titleFor=(section:string)=>modules[section]?.title ?? titles[section];
-const human=(key:string)=>key==='reference'?'TP vehicle name':key.replaceAll('_',' ').replace(/^tp\b/,'TP').replace(/^./,letter=>letter.toUpperCase());
+const human=(key:string)=>key==='reference'||key==='tp_vehicle_name'?'Receiving TP vehicle name':key==='tp_vehicle_number'?'Receiving TP vehicle number':key.replaceAll('_',' ').replace(/^tp\b/,'TP').replace(/^./,letter=>letter.toUpperCase());
 function display(key:string,value:Row[string]){
  if(value===null || value===undefined || value==='')return '—';
  if(typeof value==='boolean')return value?'Yes':'No';
@@ -38,6 +38,7 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
  const [approvalSessionId,setApprovalSessionId]=useState('');
  const [deleting,setDeleting]=useState(false);
  const [search,setSearch]=useState('');
+ const [recipient,setRecipient]=useState('');
  const [order,setOrder]=useState({key:'',direction:1});
  const [bus,setBus]=useState('');
  const [category,setCategory]=useState('');
@@ -62,7 +63,7 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
   setData(Object.fromEntries(result.filter(entry=>entry!==null)));
  }
  useEffect(()=>{void load().catch(error=>setError(error.message));},[]);
- function navigate(next:string){setSection(next);setMenu(false);setSearch('');setOrder({key:'',direction:1});setNotice('');setExpenseSession(null);setBlockedSession(null);}
+ function navigate(next:string){setSection(next);setMenu(false);setSearch('');setRecipient('');setOrder({key:'',direction:1});setNotice('');setExpenseSession(null);setBlockedSession(null);}
  const table=section==='maintenance'?'expenses':section;
  const module=modules[table];
  const approvalSession=data?.sessions.find(row=>String(row.id)===approvalSessionId);
@@ -134,7 +135,9 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
   if(table==='revenue')return {...row,received:payments(data!,row),outstanding:n(row,'amount')-payments(data!,row)};
   return row;
  });
- if(table==='revenue'&&data)rows=[...rows,...approvedTpRevenue(data)];
+ const tpRevenue=table==='revenue'&&data?approvedTpRevenue(data):[];
+ const recipientOptions=new Map(tpRevenue.map(row=>[tpRecipientKey(row),[row.tp_vehicle_name,row.tp_vehicle_number].filter(Boolean).join(' · ')]));
+ if(table==='revenue')rows=recipientOptions.has(recipient)?tpRevenue.filter(row=>tpRecipientKey(row)===recipient):[...rows,...tpRevenue];
  rows=rows.filter(row=>Object.values(row).some(value=>String(value??'').toLowerCase().includes(search.toLowerCase())));
  if(order.key)rows.sort((a,b)=>String(a[order.key]??'').localeCompare(String(b[order.key]??''),undefined,{numeric:true})*order.direction);
  const reportRows=report==='Fleet investment'?sales:filtered.filter(row=>report==='Maintenance expenses'?row.maintenance>0:report==='Outstanding receivables'?row.revenue>row.received:true);
@@ -188,7 +191,7 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
     <select id="tp-approval-session" value={approvalSessionId} onChange={event=>setApprovalSessionId(event.target.value)}>
      <option value="">Select a TP session</option>
      {data.sessions.map(row=><option key={String(row.id)} value={String(row.id)}>
-      {[row.reference,row.tp_vehicle_number||numberPlate(String(row.bus)),display('start_date',row.start_date)+' – '+display('end_date',row.end_date)].join(' · ')}
+      {[row.reference,row.tp_vehicle_number,display('start_date',row.start_date)+' – '+display('end_date',row.end_date)].filter(Boolean).join(' · ')}
      </option>)}
     </select>
    </div>:<p>No TP sessions yet. <button type="button" className="text-link" onClick={()=>navigate('sessions')}>Open TP sessions</button></p>}
@@ -197,7 +200,10 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
    approvals={data.tp_daily_approvals?.filter(row=>row.session===approvalSession.id)} refresh={load}/>}
  </>}
  {data&&['sessions','overview','company','reports','revenue'].includes(section)&&!data.tp_daily_approvals&&<p className="message">TP revenue is excluded until daily approvals are enabled in Supabase.</p>}
- {data&&module&&<section className="panel"><div className="panel-title"><h2>{rows.length} {rows.length===1?'record':'records'}</h2><input type="search" aria-label="Search records" placeholder="Search records" value={search} onChange={event=>setSearch(event.target.value)}/></div><Grid rows={rows} columns={module.columns} onEdit={row=>setEdit({table,row:data[table].find(record=>record[module.key]===row[module.key])??row})} onDelete={row=>void deleteRecord(table,row).catch(error=>setError(error.message))} deleting={deleting} isReadOnly={table==='revenue'?row=>typeof row.id==='string'&&row.id.startsWith('TP '):undefined} onApproval={table==='sessions'?row=>{setApprovalSessionId(String(row.id));navigate('daily_approvals');}:undefined} onProfile={table==='buses'?setProfile:undefined} onSort={key=>setOrder(previous=>({key,direction:previous.key===key?-previous.direction:1}))}/></section>}
+ {data&&module&&<section className="panel"><div className="panel-title"><h2>{rows.length} {rows.length===1?'record':'records'}</h2>{table==='revenue'&&<select aria-label="Filter by receiving TP vehicle" value={recipientOptions.has(recipient)?recipient:''} onChange={event=>setRecipient(event.target.value)}>
+  <option value="">All receiving TP vehicles</option>
+  {[...recipientOptions].sort(([,a],[,b])=>a.localeCompare(b)).map(([key,label])=><option key={key} value={key}>{label}</option>)}
+ </select>}<input type="search" aria-label="Search records" placeholder="Search records" value={search} onChange={event=>setSearch(event.target.value)}/></div><Grid rows={rows} columns={module.columns} onEdit={row=>setEdit({table,row:data[table].find(record=>record[module.key]===row[module.key])??row})} onDelete={row=>void deleteRecord(table,row).catch(error=>setError(error.message))} deleting={deleting} isReadOnly={table==='revenue'?row=>typeof row.id==='string'&&row.id.startsWith('TP '):undefined} onApproval={table==='sessions'?row=>{setApprovalSessionId(String(row.id));navigate('daily_approvals');}:undefined} onProfile={table==='buses'?setProfile:undefined} onSort={key=>setOrder(previous=>({key,direction:previous.key===key?-previous.direction:1}))}/></section>}
  </main></div>
  {edit&&data&&<Editor client={client} ratePresets={ratePresets} onRatePresets={setRatePresets} data={data} table={edit.table} row={edit.row} onDelete={row=>deleteRecord(edit.table,row)} close={()=>setEdit(undefined)} onSaved={message=>{setEdit(undefined);setNotice(message);void load().catch(error=>setError(error.message));}}/>}
 
