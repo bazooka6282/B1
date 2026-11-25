@@ -9,6 +9,7 @@ import { inr,numberPlate } from '../../lib/fleet';
 import { modules,today,sessionDays,fleetTpDates,n,total,dailyCost,payments,ledger,sum,type Data,type Row } from './modules';
 import { Editor } from './editor';
 import { AccountPhoto } from './account-photo';
+import { TpApprovals } from './tp-approvals';
 
 const sections=['overview','buses','sessions','routes','daily_accounts','revenue','revenue_payments','expenses','maintenance','expense_categories','fleet_transactions','company','reports','website_settings','notifications'];
 const titles:Record<string,string>={overview:'Overview',maintenance:'Spare parts & maintenance',company:'Company accounts',reports:'Reports',notifications:'Notifications'};
@@ -34,6 +35,7 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
  const [expenseSession,setExpenseSession]=useState<Row[string]>(null);
  const [edit,setEdit]=useState<{table:string;row?:Row}>();
  const [profile,setProfile]=useState<Row>();
+ const [approvalSession,setApprovalSession]=useState<Row>();
  const [deleting,setDeleting]=useState(false);
  const [search,setSearch]=useState('');
  const [order,setOrder]=useState({key:'',direction:1});
@@ -44,16 +46,20 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
  const [group,setGroup]=useState('Month');
  const [report,setReport]=useState('Operating ledger');
  async function load(){
-  const result=await Promise.all(Object.entries(modules).map(async ([table,module])=>{
+  const tables=[...Object.keys(modules),'tp_daily_approvals'];
+  const result=await Promise.all(tables.map(async table=>{
    const rows:Row[]=[];
    for(let offset=0;;offset+=500){
-    const {data,error}=await client.from(table).select('*').order(module.key).range(offset,offset+499);
+    const query=client.from(table).select('*').order(modules[table]?.key??'session');
+    if(table==='tp_daily_approvals')query.order('date');
+    const {data,error}=await query.range(offset,offset+499);
+    if(table==='tp_daily_approvals'&&error?.code==='PGRST205')return null;
     if(error)throw error;
     rows.push(...data);
     if(data.length<500)return [table,rows] as const;
    }
   }));
-  setData(Object.fromEntries(result));
+  setData(Object.fromEntries(result.filter(entry=>entry!==null)));
  }
  useEffect(()=>{void load().catch(error=>setError(error.message));},[]);
  function navigate(next:string){setSection(next);setMenu(false);setSearch('');setOrder({key:'',direction:1});setNotice('');setExpenseSession(null);setBlockedSession(null);}
@@ -118,7 +124,11 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
  if(table==='expenses'&&expenseSession!=null)rows=rows.filter(row=>row.session===expenseSession);
  if(section==='maintenance')rows=rows.filter(row=>data!.expense_categories.some(item=>item.maintenance&&item.name===row.category));
  rows=rows.filter(row=>Object.values(row).some(value=>String(value??'').toLowerCase().includes(search.toLowerCase()))).map(row=>{
-  if(table==='sessions')return {...row,days:sessionDays(String(row.start_date),String(row.end_date)),outstanding:total(row)-n(row,'received'),profit:total(row)-sum(data!.expenses.filter(item=>item.session===row.id),'amount')};
+  if(table==='sessions'){
+   const approved=(data!.tp_daily_approvals??[]).filter(item=>item.session===row.id);
+   const received=sum(approved,'amount');
+   return {...row,days:sessionDays(String(row.start_date),String(row.end_date)),approved_days:approved.length,received,profit:received-sum(data!.expenses.filter(item=>item.session===row.id),'amount')};
+  }
   if(table==='daily_accounts')return {...row,amount:total(row),profit:total(row)-dailyCost(row)};
   if(table==='revenue')return {...row,received:payments(data!,row),outstanding:n(row,'amount')-payments(data!,row)};
   return row;
@@ -168,9 +178,11 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
  ]}/></section>}
  {data&&section==='reports'&&<section className="panel"><div className="panel-title"><h2>BAZOOKA reports</h2><select aria-label="Report type" value={report} onChange={event=>setReport(event.target.value)}>{['Operating ledger','Maintenance expenses','Outstanding receivables','Fleet investment'].map(item=><option key={item}>{item}</option>)}</select></div><div className="report-actions"><button className="button secondary" onClick={exportReport}>Download CSV</button><button className="button secondary" onClick={()=>window.print()}>Print or save PDF</button></div><Grid rows={reportRows} columns={reportColumns}/></section>}
  {data&&section==='notifications'&&<section className="panel"><div className="panel-title"><h2>Document and permit reminders</h2></div><Grid rows={reminders.sort((a,b)=>String(a.date).localeCompare(String(b.date)))} columns={['date','bus','detail']}/></section>}
- {data&&module&&<section className="panel"><div className="panel-title"><h2>{rows.length} {rows.length===1?'record':'records'}</h2><input type="search" aria-label="Search records" placeholder="Search records" value={search} onChange={event=>setSearch(event.target.value)}/></div><Grid rows={rows} columns={module.columns} onEdit={row=>setEdit({table,row:data[table].find(record=>record[module.key]===row[module.key])??row})} onDelete={row=>void deleteRecord(table,row).catch(error=>setError(error.message))} deleting={deleting} onProfile={table==='buses'?setProfile:undefined} onSort={key=>setOrder(previous=>({key,direction:previous.key===key?-previous.direction:1}))}/></section>}
+ {data&&['sessions','overview','company','reports'].includes(section)&&!data.tp_daily_approvals&&<p className="message">TP revenue is excluded until daily approvals are enabled in Supabase.</p>}
+ {data&&module&&<section className="panel"><div className="panel-title"><h2>{rows.length} {rows.length===1?'record':'records'}</h2><input type="search" aria-label="Search records" placeholder="Search records" value={search} onChange={event=>setSearch(event.target.value)}/></div><Grid rows={rows} columns={module.columns} onEdit={row=>setEdit({table,row:data[table].find(record=>record[module.key]===row[module.key])??row})} onDelete={row=>void deleteRecord(table,row).catch(error=>setError(error.message))} deleting={deleting} onApproval={table==='sessions'&&data.tp_daily_approvals?setApprovalSession:undefined} onProfile={table==='buses'?setProfile:undefined} onSort={key=>setOrder(previous=>({key,direction:previous.key===key?-previous.direction:1}))}/></section>}
  </main></div>
  {edit&&data&&<Editor client={client} ratePresets={ratePresets} onRatePresets={setRatePresets} data={data} table={edit.table} row={edit.row} onDelete={row=>deleteRecord(edit.table,row)} close={()=>setEdit(undefined)} onSaved={message=>{setEdit(undefined);setNotice(message);void load().catch(error=>setError(error.message));}}/>}
+ {approvalSession&&data?.tp_daily_approvals&&<TpApprovals client={client} session={approvalSession} approvals={data.tp_daily_approvals.filter(row=>row.session===approvalSession.id)} close={()=>setApprovalSession(undefined)} refresh={load}/>}
  {profile&&<div className="modal-backdrop"><section className="modal" role="dialog" aria-modal="true" aria-label="Vehicle profile"><div className="panel-title"><h2>{numberPlate(String(profile.registration))}</h2><button autoFocus className="icon-button" onClick={()=>setProfile(undefined)} aria-label="Close profile"><X/></button></div>{profile.photo&&<img className="admin-photo" src={String(profile.photo)} alt={String(profile.name)}/>}<p>{profile.name} · {profile.status}</p><Counters values={(()=>{
  const history=entries.filter(row=>row.bus===profile.registration);return [['Operating revenue',inr(sum(history,'revenue'))],['Operating expenses',inr(sum(history,'expense'))],['Operating profit',inr(sum(history,'revenue')-sum(history,'expense'))],['Purchase value',inr(n(profile,'purchase_amount'))]];
  })()}/><Grid rows={entries.filter(row=>row.bus===profile.registration)} columns={['date','category','revenue','expense']}/><h3>TP sessions</h3><Grid rows={data?.sessions.filter(row=>row.bus===profile.registration)??[]} columns={['reference','start_date','end_date','status']}/></section></div>}
@@ -179,8 +191,8 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
 function Counters({values}:{values:readonly (readonly [string,string|number])[]}){
  return <div className="counters">{values.map(([name,value])=><div key={name}><span>{name}</span><strong>{value}</strong></div>)}</div>;
 }
-function Grid({rows,columns,onSort,onEdit,onDelete,deleting,onProfile}:{rows:Row[];columns:string[];onSort?:(key:string)=>void;onEdit?:(row:Row)=>void;onDelete?:(row:Row)=>void;deleting?:boolean;onProfile?:(row:Row)=>void}){
+function Grid({rows,columns,onSort,onEdit,onDelete,deleting,onProfile,onApproval}:{rows:Row[];columns:string[];onSort?:(key:string)=>void;onEdit?:(row:Row)=>void;onDelete?:(row:Row)=>void;deleting?:boolean;onProfile?:(row:Row)=>void;onApproval?:(row:Row)=>void}){
  return <div className="table-scroll"><table><thead><tr>{columns.map(key=><th key={key}>{onSort?<button onClick={()=>onSort(key)}>{human(key)}</button>:human(key)}</th>)}{onEdit&&<th>Actions</th>}</tr></thead>
- <tbody>{rows.map((row,index)=><tr key={String(row.id??row.registration??index)}>{columns.map(key=><td key={key}>{key==='status'?<span className={'status '+String(row[key]).toLowerCase()}>{display(key,row[key])}</span>:key==='registration'&&onProfile?<button className="text-link" onClick={()=>onProfile(row)}>{display(key,row[key])}</button>:display(key,row[key])}</td>)}{onEdit&&<td><div className="row-actions"><button type="button" className="text-link" onClick={()=>onEdit(row)}>Edit</button>{onDelete&&<button type="button" className="text-link row-delete" disabled={deleting} onClick={()=>onDelete(row)}>Delete</button>}</div></td>}</tr>)}
+ <tbody>{rows.map((row,index)=><tr key={String(row.id??row.registration??index)}>{columns.map(key=><td key={key}>{key==='status'?<span className={'status '+String(row[key]).toLowerCase()}>{display(key,row[key])}</span>:key==='registration'&&onProfile?<button className="text-link" onClick={()=>onProfile(row)}>{display(key,row[key])}</button>:display(key,row[key])}</td>)}{onEdit&&<td><div className="row-actions">{onApproval&&<button type="button" className="text-link" onClick={()=>onApproval(row)}>Daily approvals</button>}<button type="button" className="text-link" onClick={()=>onEdit(row)}>Edit</button>{onDelete&&<button type="button" className="text-link row-delete" disabled={deleting} onClick={()=>onDelete(row)}>Delete</button>}</div></td>}</tr>)}
  {!rows.length&&<tr><td className="empty-cell" colSpan={columns.length+(onEdit?1:0)}>No records to display.</td></tr>}</tbody></table></div>;
 }

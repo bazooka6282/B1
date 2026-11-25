@@ -9,9 +9,9 @@ export const modules:Record<string,{title:string; key:string; fields:Field[]; co
   ['registration','Registration'],['name','Display name'],['category','Permit category','TP|Regular'],['status','Vehicle status','Active|Inactive|Maintenance|Sold'],
   ['visible','Show on website','checkbox'],['photo','Vehicle photo','photo'],['manufacturer','Manufacturer','optional'],['model','Model','optional'],['year','Manufacturing year','optional-number'],
   ['purchase_date','Purchase date','optional-date'],['purchase_amount','Purchase value (₹)','money'],['insurance_expiry','Insurance expiry','optional-date'],['fitness_expiry','Fitness expiry','optional-date'],['tax_expiry','Road tax expiry','optional-date'],['permit_expiry','Permit expiry','optional-date'],notes]},
- sessions:{title:'TP sessions',key:'id',columns:['bus','reference','start_date','end_date','days','status','outstanding','profit'],fields:[
+ sessions:{title:'TP sessions',key:'id',columns:['bus','reference','start_date','end_date','days','status','approved_days','received','profit'],fields:[
   bus,['reference','TP reference'],['start_date','Start date','date'],['end_date','End date','date'],['route','Route or trip'],['operator','Operator','optional'],['status','Session status','Upcoming|Active|Completed|Cancelled'],
-  ['amount','Agreed revenue (₹)','money'],['additional','Additional revenue (₹)','money'],['received','Amount received (₹)','money'],notes]},
+  ['amount','Agreed revenue (₹)','money'],['additional','Additional revenue (₹)','money'],notes]},
  routes:{title:'Regular permit routes',key:'id',columns:['bus','name','origin','destination','status'],fields:[bus,['name','Route name'],['origin','Origin'],['destination','Destination'],['permit','Permit number','optional'],['permit_expiry','Permit expiry','optional-date'],['driver','Driver','optional'],['conductor','Conductor','optional'],['trips','Daily trips','optional-number'],['status','Operating status','Active|Inactive']]},
  daily_accounts:{title:'Daily accounts',key:'id',columns:['date','bus','route','amount','profit'],fields:[date,bus,['route','Route','route'],['amount','Ticket collection (₹)','money'],['additional','Additional revenue (₹)','money'],['diesel','Diesel (₹)','money'],['driver','Driver wages (₹)','money'],['conductor','Conductor wages (₹)','money'],['maintenance','Maintenance (₹)','money'],['other','Other expenses (₹)','money'],notes]},
  revenue:{title:'Revenue',key:'id',columns:['id','date','bus','category','description','amount','received','outstanding'],fields:[date,bus,['category','Category','Special trip|Bus rental|Advertising|Additional income|Other income'],['description','Description'],amount,notes]},
@@ -43,7 +43,11 @@ export const dailyCost=(row:Row)=>['diesel','driver','conductor','maintenance','
 export const payments=(data:Data,row:Row)=>data.revenue_payments.filter(payment=>payment.revenue===row.id).reduce((sum,payment)=>sum+n(payment,'amount'),0);
 export function ledger(data:Data){
  return [
-  ...data.sessions.filter(row=>row.status!=='Cancelled').map(row=>({bus:row.bus,date:String(row.start_date),category:'TP session',revenue:total(row),expense:0,received:n(row,'received'),paid:0,maintenance:0})),
+  ...(data.tp_daily_approvals??[]).flatMap(approval=>{
+   const session=data.sessions.find(row=>row.id===approval.session);
+   const received=n(approval,'amount');
+   return session?[{bus:session.bus,date:String(approval.date),category:'TP session',revenue:received,expense:0,received,paid:0,maintenance:0}]:[];
+  }),
   ...data.daily_accounts.map(row=>({bus:row.bus,date:String(row.date),category:'Daily route accounts',revenue:total(row),expense:dailyCost(row),received:total(row),paid:dailyCost(row),maintenance:n(row,'maintenance')})),
   ...data.revenue.map(row=>({bus:row.bus,date:String(row.date),category:String(row.category),revenue:n(row,'amount'),expense:0,received:payments(data,row),paid:0,maintenance:0})),
   ...data.expenses.map(row=>({bus:row.bus,date:String(row.date),category:String(row.category),revenue:0,expense:n(row,'amount'),received:0,paid:n(row,'paid'),maintenance:data.expense_categories.some(item=>item.name===row.category&&item.maintenance)?n(row,'amount'):0}))
