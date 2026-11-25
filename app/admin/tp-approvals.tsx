@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { X } from 'lucide-react';
 import { inr } from '../../lib/fleet';
 import type { browserClient } from '../../lib/browser';
 import { n, sessionDays, shiftTpDate, today, tpWeekStart, type Row } from './modules';
@@ -9,11 +8,10 @@ import { n, sessionDays, shiftTpDate, today, tpWeekStart, type Row } from './mod
 const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const formatDate = (date: string) => date.split('-').reverse().join('/');
 
-export function TpApprovals({ client, session, approvals, close, refresh }: {
+export function TpApprovals({ client, session, approvals, refresh }: {
   client: ReturnType<typeof browserClient>;
   session: Row;
-  approvals: Row[];
-  close: () => void;
+  approvals?: Row[];
   refresh: () => Promise<void>;
 }) {
   const start = String(session.start_date);
@@ -28,7 +26,7 @@ export function TpApprovals({ client, session, approvals, close, refresh }: {
   const [busy, setBusy] = useState(false);
   const sessionId = Number(session.id);
   const lastDay = shiftTpDate(week, 6);
-  const rowsByDate = new Map(approvals.map(row => [row.date, row]));
+  const rowsByDate = new Map(approvals?.map(row => [row.date, row]));
 
   function changeWeek(offset: number) {
     setWeek(shiftTpDate(week, offset));
@@ -38,7 +36,7 @@ export function TpApprovals({ client, session, approvals, close, refresh }: {
 
   async function save(event?: FormEvent<HTMLFormElement>, removeDate?: string) {
     event?.preventDefault();
-    if (busy) return;
+    if (busy || !approvals) return;
     if (removeDate && !confirm('Clear this day’s decision? Any approved amount for it will be removed from reports.')) return;
     setBusy(true);
     setError('');
@@ -62,11 +60,9 @@ export function TpApprovals({ client, session, approvals, close, refresh }: {
     }
   }
 
-  return <div className="modal-backdrop" onKeyDown={event => { if (event.key === 'Escape' && !busy) close(); }}>
-    <section className="modal" role="dialog" aria-modal="true" aria-labelledby="tp-approval-heading">
+  return <section className="panel tp-approval-panel" aria-labelledby="tp-approval-heading">
       <div className="panel-title">
-        <h2 id="tp-approval-heading">Daily revenue approval <small>{session.reference}</small></h2>
-        <button autoFocus type="button" disabled={busy} className="icon-button" onClick={close} aria-label="Close approvals"><X /></button>
+        <h2 id="tp-approval-heading">Weekly review <small>{[session.reference, session.tp_vehicle_number].filter(Boolean).join(' · ')}</small></h2>
       </div>
       <p>Approve days when you receive money. Skip leave, breakdowns, or unpaid days to record ₹0.</p>
       <div className="panel-title tp-week-navigation">
@@ -80,9 +76,10 @@ export function TpApprovals({ client, session, approvals, close, refresh }: {
           const dayDate = shiftTpDate(week, index);
           const entry = rowsByDate.get(dayDate);
           const outside = dayDate < start || dayDate > end;
-          const canReview = !outside && dayDate <= latest && session.status !== 'Cancelled';
+          const canReview = approvals && !outside && dayDate <= latest && session.status !== 'Cancelled';
           const status = entry ? String(entry.skip_reason || 'Approved')
-            : outside ? 'Outside session' : dayDate > latest ? 'Upcoming' : 'Pending';
+            : outside ? 'Outside session' : session.status === 'Cancelled' ? 'Cancelled'
+            : dayDate > latest ? 'Upcoming' : approvals ? 'Pending' : 'Unavailable';
           return <tr key={dayDate}>
             <th scope="row">{day}</th><td>{formatDate(dayDate)}</td><td>{status}</td>
             <td>{entry ? inr(n(entry, 'amount')) : '—'}</td>
@@ -109,6 +106,5 @@ export function TpApprovals({ client, session, approvals, close, refresh }: {
         <div className="modal-actions"><button className="button primary" disabled={busy}>{skipReason ? 'Skip day' : 'Approve revenue'}</button></div>
       </form>}
       {error && <div className="message error" role="alert">{error}</div>}
-    </section>
-  </div>;
+    </section>;
 }

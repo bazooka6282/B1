@@ -11,8 +11,8 @@ import { Editor } from './editor';
 import { AccountPhoto } from './account-photo';
 import { TpApprovals } from './tp-approvals';
 
-const sections=['overview','buses','sessions','routes','daily_accounts','revenue','revenue_payments','expenses','maintenance','expense_categories','fleet_transactions','company','reports','website_settings','notifications'];
-const titles:Record<string,string>={overview:'Overview',maintenance:'Spare parts & maintenance',company:'Company accounts',reports:'Reports',notifications:'Notifications'};
+const sections=['overview','buses','sessions','daily_approvals','routes','daily_accounts','revenue','revenue_payments','expenses','maintenance','expense_categories','fleet_transactions','company','reports','website_settings','notifications'];
+const titles:Record<string,string>={overview:'Overview',daily_approvals:'Daily approvals',maintenance:'Spare parts & maintenance',company:'Company accounts',reports:'Reports',notifications:'Notifications'};
 const titleFor=(section:string)=>modules[section]?.title ?? titles[section];
 const human=(key:string)=>key==='reference'?'TP vehicle name':key.replaceAll('_',' ').replace(/^tp\b/,'TP').replace(/^./,letter=>letter.toUpperCase());
 function display(key:string,value:Row[string]){
@@ -35,7 +35,7 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
  const [expenseSession,setExpenseSession]=useState<Row[string]>(null);
  const [edit,setEdit]=useState<{table:string;row?:Row}>();
  const [profile,setProfile]=useState<Row>();
- const [approvalSession,setApprovalSession]=useState<Row>();
+ const [approvalSessionId,setApprovalSessionId]=useState('');
  const [deleting,setDeleting]=useState(false);
  const [search,setSearch]=useState('');
  const [order,setOrder]=useState({key:'',direction:1});
@@ -65,6 +65,7 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
  function navigate(next:string){setSection(next);setMenu(false);setSearch('');setOrder({key:'',direction:1});setNotice('');setExpenseSession(null);setBlockedSession(null);}
  const table=section==='maintenance'?'expenses':section;
  const module=modules[table];
+ const approvalSession=data?.sessions.find(row=>String(row.id)===approvalSessionId);
  async function deleteRecord(recordTable:string,row:Row){
   if(deleting)return;
   const recordModule=modules[recordTable];
@@ -155,7 +156,7 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
   const link=document.createElement('a');link.href=href;link.download='bazooka-report.csv';link.click();setTimeout(()=>URL.revokeObjectURL(href),1000);
  }
  return <div className={'admin'+(menu?' menu-open':'')}><aside className="sidebar"><Brand href="/admin"/><nav aria-label="Admin sections">{sections.map((item,index)=>{
-  const Icon=index===0?ChartNoAxesCombined:index<=2?BusFront:index<=4?CalendarDays:index<=10?ReceiptText:Wallet;
+  const Icon=index===0?ChartNoAxesCombined:index<=2?BusFront:index<=5?CalendarDays:index<=11?ReceiptText:Wallet;
   return <button className={section===item?'selected':''} key={item} onClick={()=>navigate(item)}><Icon size={17}/>{titleFor(item)}</button>;
  })}</nav><button className="signout" onClick={async()=>{const result=await client.auth.signOut();if(result.error)setError(result.error.message);else location.assign('/login');}}><LogOut size={16}/>Sign out</button></aside>
  <div className="admin-main"><header className="admin-top"><button className="icon-button" aria-expanded={menu} aria-label="Toggle sidebar" onClick={()=>setMenu(!menu)}><Menu size={20}/></button><strong>Fleet operations</strong><Link href="/" className="site-preview"><Globe size={16}/>View website</Link><AccountPhoto client={client} initialPhoto={initialPhoto} email={email} /></header>
@@ -180,11 +181,26 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
  ]}/></section>}
  {data&&section==='reports'&&<section className="panel"><div className="panel-title"><h2>BAZOOKA reports</h2><select aria-label="Report type" value={report} onChange={event=>setReport(event.target.value)}>{['Operating ledger','Maintenance expenses','Outstanding receivables','Fleet investment'].map(item=><option key={item}>{item}</option>)}</select></div><div className="report-actions"><button className="button secondary" onClick={exportReport}>Download CSV</button><button className="button secondary" onClick={()=>window.print()}>Print or save PDF</button></div><Grid rows={reportRows} columns={reportColumns}/></section>}
  {data&&section==='notifications'&&<section className="panel"><div className="panel-title"><h2>Document and permit reminders</h2></div><Grid rows={reminders.sort((a,b)=>String(a.date).localeCompare(String(b.date)))} columns={['date','bus','detail']}/></section>}
+ {data&&section==='daily_approvals'&&<>
+  {!data.tp_daily_approvals&&<p className="message" role="status">You can view the weekly schedule. Saving approvals and skipped days requires the Supabase database update.</p>}
+  <section className="panel" aria-label="Choose a TP session">
+   {data.sessions.length?<div className="field tp-approval-selector"><label htmlFor="tp-approval-session">TP session</label>
+    <select id="tp-approval-session" value={approvalSessionId} onChange={event=>setApprovalSessionId(event.target.value)}>
+     <option value="">Select a TP session</option>
+     {data.sessions.map(row=><option key={String(row.id)} value={String(row.id)}>
+      {[row.reference,row.tp_vehicle_number||numberPlate(String(row.bus)),display('start_date',row.start_date)+' – '+display('end_date',row.end_date)].join(' · ')}
+     </option>)}
+    </select>
+   </div>:<p>No TP sessions yet. <button type="button" className="text-link" onClick={()=>navigate('sessions')}>Open TP sessions</button></p>}
+  </section>
+  {approvalSession&&<TpApprovals key={approvalSessionId} client={client} session={approvalSession}
+   approvals={data.tp_daily_approvals?.filter(row=>row.session===approvalSession.id)} refresh={load}/>}
+ </>}
  {data&&['sessions','overview','company','reports','revenue'].includes(section)&&!data.tp_daily_approvals&&<p className="message">TP revenue is excluded until daily approvals are enabled in Supabase.</p>}
- {data&&module&&<section className="panel"><div className="panel-title"><h2>{rows.length} {rows.length===1?'record':'records'}</h2><input type="search" aria-label="Search records" placeholder="Search records" value={search} onChange={event=>setSearch(event.target.value)}/></div><Grid rows={rows} columns={module.columns} onEdit={row=>setEdit({table,row:data[table].find(record=>record[module.key]===row[module.key])??row})} onDelete={row=>void deleteRecord(table,row).catch(error=>setError(error.message))} deleting={deleting} isReadOnly={table==='revenue'?row=>typeof row.id==='string'&&row.id.startsWith('TP '):undefined} onApproval={table==='sessions'&&data.tp_daily_approvals?setApprovalSession:undefined} onProfile={table==='buses'?setProfile:undefined} onSort={key=>setOrder(previous=>({key,direction:previous.key===key?-previous.direction:1}))}/></section>}
+ {data&&module&&<section className="panel"><div className="panel-title"><h2>{rows.length} {rows.length===1?'record':'records'}</h2><input type="search" aria-label="Search records" placeholder="Search records" value={search} onChange={event=>setSearch(event.target.value)}/></div><Grid rows={rows} columns={module.columns} onEdit={row=>setEdit({table,row:data[table].find(record=>record[module.key]===row[module.key])??row})} onDelete={row=>void deleteRecord(table,row).catch(error=>setError(error.message))} deleting={deleting} isReadOnly={table==='revenue'?row=>typeof row.id==='string'&&row.id.startsWith('TP '):undefined} onApproval={table==='sessions'?row=>{setApprovalSessionId(String(row.id));navigate('daily_approvals');}:undefined} onProfile={table==='buses'?setProfile:undefined} onSort={key=>setOrder(previous=>({key,direction:previous.key===key?-previous.direction:1}))}/></section>}
  </main></div>
  {edit&&data&&<Editor client={client} ratePresets={ratePresets} onRatePresets={setRatePresets} data={data} table={edit.table} row={edit.row} onDelete={row=>deleteRecord(edit.table,row)} close={()=>setEdit(undefined)} onSaved={message=>{setEdit(undefined);setNotice(message);void load().catch(error=>setError(error.message));}}/>}
- {approvalSession&&data?.tp_daily_approvals&&<TpApprovals client={client} session={approvalSession} approvals={data.tp_daily_approvals.filter(row=>row.session===approvalSession.id)} close={()=>setApprovalSession(undefined)} refresh={load}/>}
+
  {profile&&<div className="modal-backdrop"><section className="modal" role="dialog" aria-modal="true" aria-label="Vehicle profile"><div className="panel-title"><h2>{numberPlate(String(profile.registration))}</h2><button autoFocus className="icon-button" onClick={()=>setProfile(undefined)} aria-label="Close profile"><X/></button></div>{profile.photo&&<img className="admin-photo" src={String(profile.photo)} alt={String(profile.name)}/>}<p>{profile.name} · {profile.status}</p><Counters values={(()=>{
  const history=entries.filter(row=>row.bus===profile.registration);return [['Operating revenue',inr(sum(history,'revenue'))],['Operating expenses',inr(sum(history,'expense'))],['Operating profit',inr(sum(history,'revenue')-sum(history,'expense'))],['Purchase value',inr(n(profile,'purchase_amount'))]];
  })()}/><Grid rows={entries.filter(row=>row.bus===profile.registration)} columns={['date','category','revenue','expense']}/><h3>TP sessions</h3><Grid rows={data?.sessions.filter(row=>row.bus===profile.registration)??[]} columns={['reference','start_date','end_date','status']}/></section></div>}
