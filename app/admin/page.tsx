@@ -9,5 +9,5 @@ export default async function Admin() {
   if (!user) redirect('/login');
   const { data: allowed } = await client.rpc('is_fleet_admin');
   if (!allowed) return <main className="wrap profile"><h2>Access restricted</h2><p>This account does not have fleet administrator access.</p><a className="back-link" href="/">Return to website</a></main>;
-  return <Dashboard email={user.email ?? ''} initialRatePresets={user.user_metadata.tp_daily_revenue_rates}/>;
+  return <Dashboard initialPhoto={user.user_metadata.dashboard_avatar} email={user.email ?? ''} initialRatePresets={user.user_metadata.tp_daily_revenue_rates}/>;
 }

@@ -8,6 +8,7 @@ import { browserClient } from '../../lib/browser';
 import { inr,numberPlate } from '../../lib/fleet';
 import { modules,today,sessionDays,n,total,dailyCost,payments,ledger,sum,type Data,type Row } from './modules';
 import { Editor } from './editor';
+import { AccountPhoto } from './account-photo';
 
 const sections=['overview','buses','sessions','routes','daily_accounts','revenue','revenue_payments','expenses','maintenance','expense_categories','fleet_transactions','company','reports','website_settings','notifications'];
 const titles:Record<string,string>={overview:'Overview',maintenance:'Spare parts & maintenance',company:'Company accounts',reports:'Reports',notifications:'Notifications'};
@@ -21,7 +22,7 @@ function display(key:string,value:Row[string]){
  if(/^\d{4}-\d\d-\d\d$/.test(String(value)))return String(value).split('-').reverse().join('/');
  return String(value);
 }
-export function Dashboard({email,initialRatePresets}:{email:string;initialRatePresets:unknown}){
+export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;initialPhoto:unknown;initialRatePresets:unknown}){
  const [client]=useState(browserClient);
  const [ratePresets,setRatePresets]=useState(initialRatePresets);
  const [data,setData]=useState<Data>();
@@ -131,7 +132,7 @@ export function Dashboard({email,initialRatePresets}:{email:string;initialRatePr
   const Icon=index===0?ChartNoAxesCombined:index<=2?BusFront:index<=4?CalendarDays:index<=10?ReceiptText:Wallet;
   return <button className={section===item?'selected':''} key={item} onClick={()=>navigate(item)}><Icon size={17}/>{titleFor(item)}</button>;
  })}</nav><button className="signout" onClick={async()=>{const result=await client.auth.signOut();if(result.error)setError(result.error.message);else location.assign('/login');}}><LogOut size={16}/>Sign out</button></aside>
- <div className="admin-main"><header className="admin-top"><button className="icon-button" aria-expanded={menu} aria-label="Toggle sidebar" onClick={()=>setMenu(!menu)}><Menu size={20}/></button><strong>Fleet operations</strong><Link href="/" className="site-preview"><Globe size={16}/>View website</Link><span className="avatar" title={email}>{email.slice(0,2).toUpperCase()}</span></header>
+ <div className="admin-main"><header className="admin-top"><button className="icon-button" aria-expanded={menu} aria-label="Toggle sidebar" onClick={()=>setMenu(!menu)}><Menu size={20}/></button><strong>Fleet operations</strong><Link href="/" className="site-preview"><Globe size={16}/>View website</Link><AccountPhoto client={client} initialPhoto={initialPhoto} email={email} /></header>
  <main className="admin-content"><div className="admin-title"><div><p className="eyebrow dark"><span/> BAZOOKA ADMIN</p><h1>{titleFor(section)}</h1></div>{module&&(table!=='website_settings'||data?.website_settings.length===0)&&<button className="button primary" disabled={!data} onClick={()=>setEdit({table})}><Plus size={18}/> Add record</button>}</div>
  {notice&&<div className="message" role="status">{notice}</div>}{error&&<div className="message error" role="alert">{error} <button className="text-link" onClick={()=>{setError('');void load().catch(error=>setError(error.message));}}>Retry</button></div>}{!data&&!error&&<div className="skeleton" role="status">Loading fleet records…</div>}
  {data&&['overview','company','reports'].includes(section)&&<><div className="filters">
