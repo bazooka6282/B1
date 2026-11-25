@@ -10,3 +10,164 @@
 .admin{min-height:100vh;background:var(--paper);display:grid;grid-template-columns:238px minmax(0,1fr)}.admin.menu-open{grid-template-columns:0 minmax(0,1fr)}.admin.menu-open .sidebar{visibility:hidden}.sidebar{background:var(--navy);color:#c5d1e3;display:flex;flex-direction:column;gap:18px;padding:24px 13px;position:sticky;top:0;height:100dvh;overflow:auto}.sidebar .brand{margin:0 8px 15px}.sidebar nav{display:grid;gap:4px}.sidebar nav button,.signout{background:none;border:0;border-radius:7px;text-align:left;color:inherit;display:flex;align-items:center;gap:10px;font:700 13px "Manrope Variable",sans-serif;padding:10px;min-height:39px}.sidebar nav button:hover,.sidebar nav button.selected{background:#204373;color:white}.signout{margin-top:auto}.admin-top{min-height:65px;padding:10px 25px;display:flex;align-items:center;gap:12px;background:white;border-bottom:1px solid var(--line)}.admin-top strong{font-size:14px}.site-preview{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--muted)}.avatar{display:grid;place-items:center;width:35px;height:35px;border-radius:50%;background:#dbeafe;color:#195ab4;font-size:13px;font-weight:900}.icon-button{border:0;background:none;color:var(--ink);padding:6px;border-radius:6px}.icon-button:hover{background:#e9f1fd}.admin-content{max-width:1600px;margin:auto;padding:28px;display:grid;gap:18px}.admin-title,.panel-title{display:flex;justify-content:space-between;align-items:center;gap:14px}.admin-title .eyebrow{margin:0 0 7px;color:#295f9d}.filters,.metrics,.counters,.form-grid{display:grid;gap:12px}.filters{grid-template-columns:repeat(5,minmax(0,1fr));background:#fff;border:1px solid var(--line);padding:14px;border-radius:10px}.metrics,.counters{grid-template-columns:repeat(4,minmax(0,1fr))}.metric,.panel{background:#fff;border:1px solid var(--line);border-radius:10px;min-width:0}.metric{padding:15px}.metric div{display:flex;justify-content:space-between;align-items:start;gap:8px;color:var(--muted);font-size:14px;font-weight:750}.metric i{display:grid;place-items:center;padding:8px;border-radius:8px}.metric .green{background:#e0f6ef;color:#117657}.metric .red{background:#fae7e7;color:#a63737}.metric .amber{background:#fff1cc;color:#805914}.metric strong{display:block;margin-top:12px;font-size:clamp(18px,2.4vw,32px);font-weight:900;letter-spacing:-.04em;overflow-wrap:anywhere}.panel{padding:17px}.panel-title{margin-bottom:14px}.panel h2,.modal h2{font:850 18px/1.25 "Manrope Variable",sans-serif}.panel h2+p,.modal h2 small{font-size:13px;color:var(--muted);display:block;margin-top:4px}.panel-title select,.panel-title input{width:auto;max-width:52%}.chart{min-width:0}.empty-chart{min-height:240px;display:grid;place-content:center;justify-items:center;gap:8px;text-align:center;color:#526985;background:repeating-linear-gradient(0deg,#fff 0px,#fff 45px,#f0f4fa 46px)}.empty-chart strong{color:var(--ink)}.counters div{border:1px solid var(--line);padding:11px;border-radius:7px}.counters span{display:block;color:var(--muted);font-size:13px}.counters strong{font-size:19px}.table-scroll{overflow:auto}.table-scroll table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}.table-scroll th,.table-scroll td{padding:11px;border-bottom:1px solid var(--line);white-space:nowrap}.table-scroll th{background:#f4f7fc;color:var(--muted)}.table-scroll th button{font:inherit;color:inherit;background:none;border:0;padding:0}.empty-cell{color:var(--muted);text-align:center}.status{background:#e8eef7;color:#38516f;border-radius:12px;padding:4px 8px;font-size:13px}.status.active,.status.completed{background:#d9f8ea;color:#176b50}.status.sold,.status.cancelled{background:#fae4e4;color:#912f39}.status.maintenance,.status.upcoming{background:#fff1cc;color:#805914}.modal-backdrop{position:fixed;inset:0;z-index:5;display:grid;place-items:center;background:#07142596;padding:16px}.modal{background:white;padding:20px;border-radius:12px;width:min(100%,760px);max-height:92dvh;overflow:auto}.modal .counters{margin-block:14px}.modal h3{margin-top:16px;font-weight:800}.form-grid{grid-template-columns:1fr 1fr}.check{display:flex;align-items:center;gap:9px;font-weight:750;font-size:14px}.check input{width:18px;min-height:18px}.modal-actions,.report-actions{display:flex;align-items:center;justify-content:end;flex-wrap:wrap;gap:9px;margin:14px 0}.danger{color:#9b3434;background:#fff;border:0;margin-right:auto;font-weight:800}.error{background:#fff0f0;color:#9b3434!important;border-color:#ffcaca}.skeleton{padding:24px;color:#4a617c;background:white;border-radius:8px}.admin-photo{width:100%;max-height:320px;object-fit:contain;background:#eef4fb;margin-bottom:10px}
 @media(max-width:1020px){.admin{grid-template-columns:205px minmax(0,1fr)}.filters{grid-template-columns:repeat(3,minmax(0,1fr))}.metrics,.counters{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:750px){.admin,.admin.menu-open{grid-template-columns:minmax(0,1fr)}.sidebar,.admin.menu-open .sidebar{display:none}.admin.menu-open .sidebar{display:flex;visibility:visible;position:fixed;z-index:4;width:min(76vw,255px);top:58px;height:calc(100dvh - 58px)}.admin-top{min-height:58px;padding-inline:12px}.admin-content{padding:14px}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}.modal .form-grid{grid-template-columns:minmax(0,1fr)}}@media print{.sidebar,.admin-top,.filters,.report-actions,.panel-title select{display:none!important}.admin,.admin.menu-open{display:block}.admin-content{padding:0}.table-scroll{overflow:visible}.table-scroll td{white-space:normal}}
 .about-photo{width:100%;max-height:300px;object-fit:cover;object-position:center 55%;margin-top:24px;border-radius:8px}
+
+/* Public fleet showcase */
+.public-site {
+  --showcase-paper: #f7f4ed;
+  --showcase-ink: #172522;
+  --showcase-green: #344841;
+  --showcase-line: #d9d9cb;
+  background: var(--showcase-paper);
+  color: var(--showcase-ink);
+  min-height: 100svh;
+}
+.public-site .wrap { width: min(1440px, calc(100% - 96px)); }
+.public-site .site-head {
+  background: var(--showcase-paper);
+  color: var(--showcase-ink);
+  border-bottom: 1px solid var(--showcase-line);
+}
+.public-site .site-head .brand { color: var(--showcase-ink); }
+.public-site .site-head .brand small { color: var(--showcase-green); }
+.public-site .top nav { color: var(--showcase-green); }
+.public-site .top nav a:hover { color: #145fb4; }
+.public-site .login-link {
+  border-color: #8c9a90;
+  color: var(--showcase-ink);
+  border-radius: 4px;
+  min-height: 44px;
+}
+.public-site .login-link:hover { background: #e8ede4; }
+.front {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr);
+  gap: clamp(24px, 4vw, 72px);
+  align-items: center;
+  padding-block: clamp(34px, 5vw, 84px);
+}
+.front-copy { padding-block: 14px; }
+.location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  color: var(--showcase-green);
+  font-size: .82rem;
+  font-weight: 850;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.front h1, .vehicle-profile h1 {
+  margin: 0;
+  font: 800 clamp(4.4rem, 8.6vw, 9rem)/.83 "Barlow Condensed", "Arial Narrow", sans-serif;
+  letter-spacing: -.02em;
+}
+.front h1 em { color: #155db3; font-style: normal; }
+.front-copy > p:not(.location), .fleet-story p {
+  margin: 22px 0;
+  max-width: 31rem;
+  color: var(--showcase-green);
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+  line-height: 1.7;
+}
+.front-action {
+  min-height: 48px;
+  padding: 12px 16px;
+  background: var(--showcase-ink);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  font-weight: 800;
+  font-size: .9rem;
+  border-radius: 4px;
+}
+.front-action:hover { background: #155db3; }
+.front-feature { margin: 0; min-width: 0; }
+.front-feature img {
+  aspect-ratio: 3 / 2;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 5px 5px 0 0;
+  background: #dce2d5;
+}
+.front-feature figcaption { background: var(--showcase-ink); color: white; border-radius: 0 0 5px 5px; }
+.front-feature figcaption a { display: flex; min-height: 54px; align-items: center; gap: 16px; padding: 10px 15px; }
+.front-feature strong { font-weight: 850; margin-right: auto; }
+.front-feature figcaption span { font-family: ui-monospace, monospace; color: #d6e0d8; font-size: .86rem; }
+.public-site h2 { font-size: clamp(3.2rem, 6vw, 6.8rem); }
+.public-site .fleet-section {
+  background: #e9ede4;
+  border-block: 1px solid var(--showcase-line);
+  padding-block: clamp(46px, 6vw, 88px);
+}
+.public-site .count { color: var(--showcase-green); }
+.public-site .fleet-grid { gap: clamp(12px, 1.6vw, 23px); }
+.public-site .vehicle-card {
+  background: var(--showcase-paper);
+  border-color: #c9d1c6;
+  border-radius: 5px;
+}
+.public-site .vehicle-card:hover { border-color: #155db3; }
+.public-site .vehicle-image { aspect-ratio: 3 / 2; background: #d4dfd1; }
+.public-site .vehicle-image img { object-position: center; object-fit: contain; }
+.public-site .vehicle-info small { color: var(--showcase-green); letter-spacing: .06em; }
+.fleet-story {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, .85fr);
+  align-items: center;
+  gap: clamp(24px, 6vw, 100px);
+  padding-block: clamp(46px, 8vw, 110px);
+}
+.fleet-story img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 5px;
+}
+.public-site .gallery-section, .public-site footer { background: var(--showcase-ink); }
+.public-site .gallery-section { padding-block: clamp(42px, 6vw, 84px); }
+.public-site .gallery-grid button { background: #243932; aspect-ratio: 3 / 2; }
+.public-site .gallery-grid img { object-fit: contain; }
+.public-site footer { border-color: #455751; }
+.public-site .footer { color: #e0e8e0; }
+.vehicle-profile { padding-block: clamp(34px, 6vw, 80px); }
+.vehicle-profile header { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 25px; }
+.vehicle-profile .registration { padding: 8px 12px; border: 1px solid #8c9a90; font-family: ui-monospace, monospace; }
+.profile-feature { width: 100%; max-height: min(78svh, 760px); object-fit: contain; background: #e9ede4; border-radius: 5px; }
+.profile-placeholder { min-height: 210px; background: #e9ede4; }
+.profile-gallery { margin-top: 45px; }
+.auth-art { background-image: linear-gradient(180deg, #1228209c, transparent 46%, #12282055), url('/fleet/ayshu-editorial.webp'); }
+.auth-form { background: #f7f4ed; }
+
+@media (max-width: 1020px) {
+  .public-site .wrap { width: calc(100% - 56px); }
+}
+@media (max-width: 760px) {
+  .front { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .front-copy { padding: 0; }
+  .front h1, .vehicle-profile h1 { font-size: clamp(4.1rem, 13vw, 7.2rem); }
+  .front-copy > p:not(.location) { margin-block: 14px; }
+  .fleet-story { grid-template-columns: minmax(0, 1fr); }
+  .fleet-story img { order: 1; }
+}
+@media (max-width: 560px) {
+  .public-site .wrap { width: calc(100% - 32px); }
+  .public-site .top nav a { display: flex; align-items: center; min-height: 40px; }
+  .public-site .front { padding-top: 25px; }
+  .public-site .fleet-grid { grid-template-columns: minmax(0, 1fr); }
+  .public-site .vehicle-info { padding: 14px; }
+  .public-site .vehicle-info svg { display: block; }
+  .public-site .vehicle-info small { font-size: .76rem; }
+  .public-site .footer { align-items: flex-start; flex-direction: column; }
+  .vehicle-profile header { flex-wrap: wrap; }
+  .vehicle-profile .back-link { margin-bottom: 24px; }
+  .auth-art { background-position: center; min-height: 100px; }
+  .auth-form { padding: 24px 18px; align-content: start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .public-site .vehicle-image img { transition: none; }
+}
