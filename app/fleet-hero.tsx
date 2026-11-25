@@ -2,21 +2,23 @@
 
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Pause, Play } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { numberPlate } from '../lib/fleet';
 
 type Slide = { src: string; name: string; registration: string; mobileSrc?: string };
 
 export function FleetHero({ slides }: { slides: Slide[] }) {
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [slideLinkFocused, setSlideLinkFocused] = useState(false);
+  const paused = reducedMotion || slideLinkFocused;
   const swipeStart = useRef<{ id: number; x: number; y: number } | null>(null);
   const slide = slides[index];
   const slideCount = slides.length;
 
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setPaused(preference.matches);
+    const update = () => setReducedMotion(preference.matches);
     update();
     preference.addEventListener('change', update);
     return () => preference.removeEventListener('change', update);
@@ -75,15 +77,12 @@ export function FleetHero({ slides }: { slides: Slide[] }) {
       </div>
       {slide && <div className="cinema-controls">
         <div className="cinema-progress">
-          <p aria-live={paused ? 'polite' : 'off'}><strong>{String(index + 1).padStart(2, '0')}</strong> / {String(slides.length).padStart(2, '0')} <Link href={'/fleet/' + slide.registration} onFocus={() => setPaused(true)}>{slide.name}</Link></p>
+          <p aria-live={paused ? 'polite' : 'off'}><strong>{String(index + 1).padStart(2, '0')}</strong> / {String(slides.length).padStart(2, '0')} <Link href={'/fleet/' + slide.registration} onFocus={() => setSlideLinkFocused(true)} onBlur={() => setSlideLinkFocused(false)}>{slide.name}</Link></p>
           {slides.length > 1 && <div className="cinema-dots">{slides.map((item, i) =>
             <button key={item.registration} type="button" aria-label={'Show ' + item.name + ' ' + numberPlate(item.registration)} aria-current={index === i ? 'true' : undefined} onClick={() => setIndex(i)} />
           )}</div>}
         </div>
         {slides.length > 1 && <div className="cinema-arrows">
-          <button type="button" aria-label={paused ? 'Play slideshow' : 'Pause slideshow'} onClick={() => setPaused(current => !current)}>
-            {paused ? <Play size={18} /> : <Pause size={18} />}
-          </button>
           <button type="button" aria-label="Previous bus" onClick={() => step(-1)}><ArrowLeft size={21}/></button>
           <button type="button" aria-label="Next bus" onClick={() => step(1)}><ArrowRight size={21}/></button>
         </div>}
