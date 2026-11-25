@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { numberPlate } from '../lib/fleet';
 
-type Slide = { src: string; name: string; registration: string; cinematic: boolean };
+type Slide = { src: string; name: string; registration: string; mobileSrc?: string };
 
 export function FleetHero({ slides }: { slides: Slide[] }) {
   const [index, setIndex] = useState(0);
@@ -15,8 +15,8 @@ export function FleetHero({ slides }: { slides: Slide[] }) {
   }
 
   return <section id="home" className="cinema-hero" aria-label="Featured fleet">
-    {slide && <picture key={slide.src} className={slide.cinematic ? 'cinema-image cinematic' : 'cinema-image'}>
-      {slide.cinematic && <source media="(max-width: 700px)" srcSet="/fleet/ayshu-dusk-mobile.webp" />}
+    {slide && <picture key={slide.src} className={slide.mobileSrc ? 'cinema-image cinematic' : 'cinema-image'}>
+      {slide.mobileSrc && <source media="(max-width: 700px)" srcSet={slide.mobileSrc} />}
       <img src={slide.src} alt={slide.name + ' · ' + numberPlate(slide.registration)} fetchPriority={index === 0 ? 'high' : 'auto'} />
     </picture>}
     <div className="cinema-shade" aria-hidden="true"/>

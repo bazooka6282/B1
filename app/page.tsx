@@ -8,14 +8,26 @@ import { FleetHero } from './fleet-hero';
 
 export const dynamic = 'force-dynamic';
 
+const rainScenes: Record<string, string> = {
+  '/fleet/ayshu-editorial.webp': 'ayshu',
+  '/fleet/feemol-editorial.webp': 'feemol',
+  '/fleet/zaeem-editorial.webp': 'zaeem',
+  '/fleet/route-editorial.webp': 'route',
+};
+
 export default async function Home() {
   const [fleet, contact] = await Promise.all([getFleet(), getContact()]);
   const slides = fleet.flatMap(bus => {
     const photo = photos(bus)[0];
     if (!photo) return [];
-    const cinematic = photo === '/fleet/ayshu-editorial.webp';
-    return [{ src: cinematic ? '/fleet/ayshu-dusk.webp' : photo, name: bus.name, registration: bus.registration, cinematic }];
-  }).sort((a, b) => Number(b.cinematic) - Number(a.cinematic));
+    const scene = rainScenes[photo];
+    return [{
+      src: scene ? '/fleet/' + scene + '-monsoon.webp' : photo,
+      mobileSrc: scene ? '/fleet/' + scene + '-monsoon-mobile.webp' : undefined,
+      name: bus.name,
+      registration: bus.registration,
+    }];
+  }).sort((a, b) => Number(b.registration === 'KL05Z2113') - Number(a.registration === 'KL05Z2113'));
   const shots = fleet.flatMap(bus => photos(bus).slice(0, 2).map(src => ({ src, name: bus.name, registration: bus.registration })));
 
   return <div className="public-site">
