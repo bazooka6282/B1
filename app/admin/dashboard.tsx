@@ -125,7 +125,7 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
  if(section==='maintenance')rows=rows.filter(row=>data!.expense_categories.some(item=>item.maintenance&&item.name===row.category));
  rows=rows.filter(row=>Object.values(row).some(value=>String(value??'').toLowerCase().includes(search.toLowerCase()))).map(row=>{
   if(table==='sessions'){
-   const approved=(data!.tp_daily_approvals??[]).filter(item=>item.session===row.id);
+   const approved=(data!.tp_daily_approvals??[]).filter(item=>item.session===row.id&&!item.skip_reason&&n(item,'amount')>0);
    const received=sum(approved,'amount');
    return {...row,days:sessionDays(String(row.start_date),String(row.end_date)),approved_days:approved.length,received,profit:received-sum(data!.expenses.filter(item=>item.session===row.id),'amount')};
   }

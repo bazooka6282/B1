@@ -27,6 +27,15 @@ export function sessionDays(startDate: string, endDate: string) {
  return difference>=0 ? difference/86400000+1 : 0;
 }
 export const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());
+export function shiftTpDate(value: string, offset: number) {
+ const date = new Date(value + 'T00:00:00Z');
+ date.setUTCDate(date.getUTCDate() + offset);
+ return date.toISOString().slice(0,10);
+}
+export function tpWeekStart(date: string) {
+ const weekday = new Date(date + 'T00:00:00Z').getUTCDay();
+ return shiftTpDate(date, -((weekday + 6) % 7));
+}
 export function fleetTpDates(vehicle: Row, sessions: Row[], date: string) {
  const matching = vehicle.category === 'TP'
   ? sessions.filter(session => session.bus === vehicle.registration && session.status !== 'Cancelled')
@@ -46,7 +55,7 @@ export function ledger(data:Data){
   ...(data.tp_daily_approvals??[]).flatMap(approval=>{
    const session=data.sessions.find(row=>row.id===approval.session);
    const received=n(approval,'amount');
-   return session?[{bus:session.bus,date:String(approval.date),category:'TP session',revenue:received,expense:0,received,paid:0,maintenance:0}]:[];
+   return session&&!approval.skip_reason&&received>0?[{bus:session.bus,date:String(approval.date),category:'TP session',revenue:received,expense:0,received,paid:0,maintenance:0}]:[];
   }),
   ...data.daily_accounts.map(row=>({bus:row.bus,date:String(row.date),category:'Daily route accounts',revenue:total(row),expense:dailyCost(row),received:total(row),paid:dailyCost(row),maintenance:n(row,'maintenance')})),
   ...data.revenue.map(row=>({bus:row.bus,date:String(row.date),category:String(row.category),revenue:n(row,'amount'),expense:0,received:payments(data,row),paid:0,maintenance:0})),
