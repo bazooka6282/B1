@@ -89,6 +89,7 @@ export function Editor({client,data,table,row,close,onSaved,onDelete,ratePresets
     if(locked(key))continue;
     const type=raw.replace(/^optional-?/,'')||'text';
     const value=form.get(key);
+    if(key==='tp_vehicle_number'&&!String(value??'').trim()&&!row?.tp_vehicle_number)continue;
     if(type==='photo'){
      if(!(value instanceof File)||!value.size)continue;
      const bucket=client.storage.from('fleet-photos');
@@ -99,11 +100,14 @@ export function Editor({client,data,table,row,close,onSaved,onDelete,ratePresets
     }else if(type==='checkbox')draft[key]=value==='on';
     else if(!String(value??'').trim())draft[key]=null;
     else if(['money','number','session','route','revenue'].includes(type))draft[key]=Number(value);
-    else draft[key]=key==='registration'?String(value).toUpperCase().replace(/\s+/g,''):String(value).trim();
+    else draft[key]=key==='registration'?String(value).toUpperCase().replace(/\s+/g,''):key==='tp_vehicle_number'?String(value).trim().toUpperCase():String(value).trim();
    }
    if(table==='website_settings'&&!row)draft.id=1;
    const source=client.from(table);
    const result=row?await source.update(draft).eq(config.key,row[config.key]!).select(config.key):await source.insert(draft);
+   if(tpSession&&result.error?.code==='PGRST204'&&result.error.message.includes('tp_vehicle_number')){
+    throw new Error('Saving the TP vehicle number requires the Supabase database update.');
+   }
    if(result.error)throw result.error;
    if(row&&!result.data?.length)throw new Error('This record could not be updated. Refresh the dashboard and try again.');
    onSaved('Record saved.');

@@ -9,12 +9,12 @@ export const modules:Record<string,{title:string; key:string; fields:Field[]; co
   ['registration','Registration'],['name','Display name'],['category','Permit category','TP|Regular'],['status','Vehicle status','Active|Inactive|Maintenance|Sold'],
   ['visible','Show on website','checkbox'],['photo','Vehicle photo','photo'],['manufacturer','Manufacturer','optional'],['model','Model','optional'],['year','Manufacturing year','optional-number'],
   ['purchase_date','Purchase date','optional-date'],['purchase_amount','Purchase value (₹)','money'],['insurance_expiry','Insurance expiry','optional-date'],['fitness_expiry','Fitness expiry','optional-date'],['tax_expiry','Road tax expiry','optional-date'],['permit_expiry','Permit expiry','optional-date'],notes]},
- sessions:{title:'TP sessions',key:'id',columns:['bus','reference','start_date','end_date','days','status','approved_days','received','profit'],fields:[
-  bus,['reference','TP reference'],['start_date','Start date','date'],['end_date','End date','date'],['route','Route or trip'],['operator','Operator','optional'],['status','Session status','Upcoming|Active|Completed|Cancelled'],
-  ['amount','Agreed revenue (₹)','money'],['additional','Additional revenue (₹)','money'],notes]},
+ sessions:{title:'TP sessions',key:'id',columns:['bus','reference','tp_vehicle_number','start_date','end_date','days','status','approved_days','approved_revenue','profit'],fields:[
+  ['bus','Fleet vehicle','bus'],['reference','TP vehicle name'],['tp_vehicle_number','TP vehicle number','optional'],['start_date','Start date','date'],['end_date','End date','date'],['route','Route or trip'],['operator','Operator','optional'],['status','Session status','Upcoming|Active|Completed|Cancelled'],
+  ['amount','Agreed revenue (₹)','money'],notes]},
  routes:{title:'Regular permit routes',key:'id',columns:['bus','name','origin','destination','status'],fields:[bus,['name','Route name'],['origin','Origin'],['destination','Destination'],['permit','Permit number','optional'],['permit_expiry','Permit expiry','optional-date'],['driver','Driver','optional'],['conductor','Conductor','optional'],['trips','Daily trips','optional-number'],['status','Operating status','Active|Inactive']]},
  daily_accounts:{title:'Daily accounts',key:'id',columns:['date','bus','route','amount','profit'],fields:[date,bus,['route','Route','route'],['amount','Ticket collection (₹)','money'],['additional','Additional revenue (₹)','money'],['diesel','Diesel (₹)','money'],['driver','Driver wages (₹)','money'],['conductor','Conductor wages (₹)','money'],['maintenance','Maintenance (₹)','money'],['other','Other expenses (₹)','money'],notes]},
- revenue:{title:'Revenue',key:'id',columns:['id','date','bus','category','description','amount','received','outstanding'],fields:[date,bus,['category','Category','Special trip|Bus rental|Advertising|Additional income|Other income'],['description','Description'],amount,notes]},
+ revenue:{title:'Revenue',key:'id',columns:['id','date','bus','category','tp_vehicle_name','tp_vehicle_number','description','amount','received','outstanding'],fields:[date,bus,['category','Category','Special trip|Bus rental|Advertising|Additional income|Other income'],['description','Description'],amount,notes]},
  revenue_payments:{title:'Revenue payments',key:'id',columns:['date','revenue','amount','method'],fields:[date,['revenue','Revenue record','revenue'],amount,['method','Payment method','Cash|UPI|Bank transfer|Other'],notes]},
  expenses:{title:'Expenses',key:'id',columns:['date','bus','category','description','amount','paid'],fields:[date,['bus','Vehicle','optional-bus'],['session','TP session','optional-session'],['category','Category','category'],['description','Description'],['item','Item','optional'],['quantity','Quantity','optional-number'],['unit_price','Unit price (₹)','optional-money'],amount,['paid','Paid amount (₹)','money'],['vendor','Vendor','optional'],['method','Payment method','optional'],notes]},
  expense_categories:{title:'Expense categories',key:'name',columns:['name','active','maintenance'],fields:[['name','Category name'],['active','Active','checkbox'],['maintenance','Maintenance category','checkbox']]},
@@ -50,13 +50,22 @@ export const n=(row:Row,key:string)=>Number(row[key]??0);
 export const total=(row:Row)=>n(row,'amount')+n(row,'additional');
 export const dailyCost=(row:Row)=>['diesel','driver','conductor','maintenance','other'].reduce((sum,key)=>sum+n(row,key),0);
 export const payments=(data:Data,row:Row)=>data.revenue_payments.filter(payment=>payment.revenue===row.id).reduce((sum,payment)=>sum+n(payment,'amount'),0);
+export function approvedTpRevenue(data:Data) {
+ const sessions = new Map(data.sessions.map(session=>[session.id,session]));
+ return (data.tp_daily_approvals??[]).flatMap(approval=>{
+  const session=sessions.get(approval.session);
+  const amount=n(approval,'amount');
+  if(!session||approval.skip_reason||amount<=0)return [];
+  return [{
+   id:`TP ${session.id}/${approval.date}`, bus:session.bus,date:String(approval.date),category:'TP session',
+   tp_vehicle_name:session.reference,tp_vehicle_number:session.tp_vehicle_number??null,
+   description:session.route,amount,received:amount,outstanding:0,
+  }];
+ });
+}
 export function ledger(data:Data){
  return [
-  ...(data.tp_daily_approvals??[]).flatMap(approval=>{
-   const session=data.sessions.find(row=>row.id===approval.session);
-   const received=n(approval,'amount');
-   return session&&!approval.skip_reason&&received>0?[{bus:session.bus,date:String(approval.date),category:'TP session',revenue:received,expense:0,received,paid:0,maintenance:0}]:[];
-  }),
+  ...approvedTpRevenue(data).map(({bus,date,category,amount})=>({bus,date,category,revenue:amount,expense:0,received:amount,paid:0,maintenance:0})),
   ...data.daily_accounts.map(row=>({bus:row.bus,date:String(row.date),category:'Daily route accounts',revenue:total(row),expense:dailyCost(row),received:total(row),paid:dailyCost(row),maintenance:n(row,'maintenance')})),
   ...data.revenue.map(row=>({bus:row.bus,date:String(row.date),category:String(row.category),revenue:n(row,'amount'),expense:0,received:payments(data,row),paid:0,maintenance:0})),
   ...data.expenses.map(row=>({bus:row.bus,date:String(row.date),category:String(row.category),revenue:0,expense:n(row,'amount'),received:0,paid:n(row,'paid'),maintenance:data.expense_categories.some(item=>item.name===row.category&&item.maintenance)?n(row,'amount'):0}))

@@ -6,7 +6,7 @@ import { Bar,BarChart,CartesianGrid,ResponsiveContainer,Tooltip,XAxis,YAxis } fr
 import { Brand } from '../brand';
 import { browserClient } from '../../lib/browser';
 import { inr,numberPlate } from '../../lib/fleet';
-import { modules,today,sessionDays,fleetTpDates,n,total,dailyCost,payments,ledger,sum,type Data,type Row } from './modules';
+import { modules,today,sessionDays,fleetTpDates,n,total,dailyCost,payments,approvedTpRevenue,ledger,sum,type Data,type Row } from './modules';
 import { Editor } from './editor';
 import { AccountPhoto } from './account-photo';
 import { TpApprovals } from './tp-approvals';
@@ -14,11 +14,11 @@ import { TpApprovals } from './tp-approvals';
 const sections=['overview','buses','sessions','routes','daily_accounts','revenue','revenue_payments','expenses','maintenance','expense_categories','fleet_transactions','company','reports','website_settings','notifications'];
 const titles:Record<string,string>={overview:'Overview',maintenance:'Spare parts & maintenance',company:'Company accounts',reports:'Reports',notifications:'Notifications'};
 const titleFor=(section:string)=>modules[section]?.title ?? titles[section];
-const human=(key:string)=>key.replaceAll('_',' ').replace(/^tp\b/,'TP').replace(/^./,letter=>letter.toUpperCase());
+const human=(key:string)=>key==='reference'?'TP vehicle name':key.replaceAll('_',' ').replace(/^tp\b/,'TP').replace(/^./,letter=>letter.toUpperCase());
 function display(key:string,value:Row[string]){
  if(value===null || value===undefined || value==='')return '—';
  if(typeof value==='boolean')return value?'Yes':'No';
- if(['amount','profit','outstanding','paid','received','purchase_amount','charges','revenue','expense'].includes(key)&&typeof value==='number')return inr(value);
+ if(['amount','profit','outstanding','paid','received','approved_revenue','purchase_amount','charges','revenue','expense'].includes(key)&&typeof value==='number')return inr(value);
  if(['registration','bus'].includes(key))return numberPlate(String(value));
  if(/^\d{4}-\d\d-\d\d$/.test(String(value)))return String(value).split('-').reverse().join('/');
  return String(value);
@@ -123,16 +123,18 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
  }
  if(table==='expenses'&&expenseSession!=null)rows=rows.filter(row=>row.session===expenseSession);
  if(section==='maintenance')rows=rows.filter(row=>data!.expense_categories.some(item=>item.maintenance&&item.name===row.category));
- rows=rows.filter(row=>Object.values(row).some(value=>String(value??'').toLowerCase().includes(search.toLowerCase()))).map(row=>{
+ rows=rows.map(row=>{
   if(table==='sessions'){
    const approved=(data!.tp_daily_approvals??[]).filter(item=>item.session===row.id&&!item.skip_reason&&n(item,'amount')>0);
    const received=sum(approved,'amount');
-   return {...row,days:sessionDays(String(row.start_date),String(row.end_date)),approved_days:approved.length,received,profit:received-sum(data!.expenses.filter(item=>item.session===row.id),'amount')};
+   return {...row,days:sessionDays(String(row.start_date),String(row.end_date)),approved_days:approved.length,approved_revenue:received,profit:received-sum(data!.expenses.filter(item=>item.session===row.id),'amount')};
   }
   if(table==='daily_accounts')return {...row,amount:total(row),profit:total(row)-dailyCost(row)};
   if(table==='revenue')return {...row,received:payments(data!,row),outstanding:n(row,'amount')-payments(data!,row)};
   return row;
  });
+ if(table==='revenue'&&data)rows=[...rows,...approvedTpRevenue(data)];
+ rows=rows.filter(row=>Object.values(row).some(value=>String(value??'').toLowerCase().includes(search.toLowerCase())));
  if(order.key)rows.sort((a,b)=>String(a[order.key]??'').localeCompare(String(b[order.key]??''),undefined,{numeric:true})*order.direction);
  const reportRows=report==='Fleet investment'?sales:filtered.filter(row=>report==='Maintenance expenses'?row.maintenance>0:report==='Outstanding receivables'?row.revenue>row.received:true);
  const reportColumns=report==='Fleet investment'?['date','bus','kind','amount','charges','received']:['date','bus','category','revenue','expense','received','paid'];
@@ -178,8 +180,8 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
  ]}/></section>}
  {data&&section==='reports'&&<section className="panel"><div className="panel-title"><h2>BAZOOKA reports</h2><select aria-label="Report type" value={report} onChange={event=>setReport(event.target.value)}>{['Operating ledger','Maintenance expenses','Outstanding receivables','Fleet investment'].map(item=><option key={item}>{item}</option>)}</select></div><div className="report-actions"><button className="button secondary" onClick={exportReport}>Download CSV</button><button className="button secondary" onClick={()=>window.print()}>Print or save PDF</button></div><Grid rows={reportRows} columns={reportColumns}/></section>}
  {data&&section==='notifications'&&<section className="panel"><div className="panel-title"><h2>Document and permit reminders</h2></div><Grid rows={reminders.sort((a,b)=>String(a.date).localeCompare(String(b.date)))} columns={['date','bus','detail']}/></section>}
- {data&&['sessions','overview','company','reports'].includes(section)&&!data.tp_daily_approvals&&<p className="message">TP revenue is excluded until daily approvals are enabled in Supabase.</p>}
- {data&&module&&<section className="panel"><div className="panel-title"><h2>{rows.length} {rows.length===1?'record':'records'}</h2><input type="search" aria-label="Search records" placeholder="Search records" value={search} onChange={event=>setSearch(event.target.value)}/></div><Grid rows={rows} columns={module.columns} onEdit={row=>setEdit({table,row:data[table].find(record=>record[module.key]===row[module.key])??row})} onDelete={row=>void deleteRecord(table,row).catch(error=>setError(error.message))} deleting={deleting} onApproval={table==='sessions'&&data.tp_daily_approvals?setApprovalSession:undefined} onProfile={table==='buses'?setProfile:undefined} onSort={key=>setOrder(previous=>({key,direction:previous.key===key?-previous.direction:1}))}/></section>}
+ {data&&['sessions','overview','company','reports','revenue'].includes(section)&&!data.tp_daily_approvals&&<p className="message">TP revenue is excluded until daily approvals are enabled in Supabase.</p>}
+ {data&&module&&<section className="panel"><div className="panel-title"><h2>{rows.length} {rows.length===1?'record':'records'}</h2><input type="search" aria-label="Search records" placeholder="Search records" value={search} onChange={event=>setSearch(event.target.value)}/></div><Grid rows={rows} columns={module.columns} onEdit={row=>setEdit({table,row:data[table].find(record=>record[module.key]===row[module.key])??row})} onDelete={row=>void deleteRecord(table,row).catch(error=>setError(error.message))} deleting={deleting} isReadOnly={table==='revenue'?row=>typeof row.id==='string'&&row.id.startsWith('TP '):undefined} onApproval={table==='sessions'&&data.tp_daily_approvals?setApprovalSession:undefined} onProfile={table==='buses'?setProfile:undefined} onSort={key=>setOrder(previous=>({key,direction:previous.key===key?-previous.direction:1}))}/></section>}
  </main></div>
  {edit&&data&&<Editor client={client} ratePresets={ratePresets} onRatePresets={setRatePresets} data={data} table={edit.table} row={edit.row} onDelete={row=>deleteRecord(edit.table,row)} close={()=>setEdit(undefined)} onSaved={message=>{setEdit(undefined);setNotice(message);void load().catch(error=>setError(error.message));}}/>}
  {approvalSession&&data?.tp_daily_approvals&&<TpApprovals client={client} session={approvalSession} approvals={data.tp_daily_approvals.filter(row=>row.session===approvalSession.id)} close={()=>setApprovalSession(undefined)} refresh={load}/>}
@@ -191,8 +193,8 @@ export function Dashboard({email,initialPhoto,initialRatePresets}:{email:string;
 function Counters({values}:{values:readonly (readonly [string,string|number])[]}){
  return <div className="counters">{values.map(([name,value])=><div key={name}><span>{name}</span><strong>{value}</strong></div>)}</div>;
 }
-function Grid({rows,columns,onSort,onEdit,onDelete,deleting,onProfile,onApproval}:{rows:Row[];columns:string[];onSort?:(key:string)=>void;onEdit?:(row:Row)=>void;onDelete?:(row:Row)=>void;deleting?:boolean;onProfile?:(row:Row)=>void;onApproval?:(row:Row)=>void}){
+function Grid({rows,columns,onSort,onEdit,onDelete,deleting,onProfile,onApproval,isReadOnly}:{rows:Row[];columns:string[];onSort?:(key:string)=>void;onEdit?:(row:Row)=>void;onDelete?:(row:Row)=>void;deleting?:boolean;onProfile?:(row:Row)=>void;onApproval?:(row:Row)=>void;isReadOnly?:(row:Row)=>boolean}){
  return <div className="table-scroll"><table><thead><tr>{columns.map(key=><th key={key}>{onSort?<button onClick={()=>onSort(key)}>{human(key)}</button>:human(key)}</th>)}{onEdit&&<th>Actions</th>}</tr></thead>
- <tbody>{rows.map((row,index)=><tr key={String(row.id??row.registration??index)}>{columns.map(key=><td key={key}>{key==='status'?<span className={'status '+String(row[key]).toLowerCase()}>{display(key,row[key])}</span>:key==='registration'&&onProfile?<button className="text-link" onClick={()=>onProfile(row)}>{display(key,row[key])}</button>:display(key,row[key])}</td>)}{onEdit&&<td><div className="row-actions">{onApproval&&<button type="button" className="text-link" onClick={()=>onApproval(row)}>Daily approvals</button>}<button type="button" className="text-link" onClick={()=>onEdit(row)}>Edit</button>{onDelete&&<button type="button" className="text-link row-delete" disabled={deleting} onClick={()=>onDelete(row)}>Delete</button>}</div></td>}</tr>)}
+ <tbody>{rows.map((row,index)=><tr key={String(row.id??row.registration??index)}>{columns.map(key=><td key={key}>{key==='status'?<span className={'status '+String(row[key]).toLowerCase()}>{display(key,row[key])}</span>:key==='registration'&&onProfile?<button className="text-link" onClick={()=>onProfile(row)}>{display(key,row[key])}</button>:display(key,row[key])}</td>)}{onEdit&&<td>{isReadOnly?.(row)?<span>See TP sessions</span>:<div className="row-actions">{onApproval&&<button type="button" className="text-link" onClick={()=>onApproval(row)}>Daily approvals</button>}<button type="button" className="text-link" onClick={()=>onEdit(row)}>Edit</button>{onDelete&&<button type="button" className="text-link row-delete" disabled={deleting} onClick={()=>onDelete(row)}>Delete</button>}</div>}</td>}</tr>)}
  {!rows.length&&<tr><td className="empty-cell" colSpan={columns.length+(onEdit?1:0)}>No records to display.</td></tr>}</tbody></table></div>;
 }
