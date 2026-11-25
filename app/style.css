@@ -298,6 +298,69 @@
 .public-site footer { border-color: var(--showcase-line); }
 .auth-art { background-image: linear-gradient(180deg,#020b14a8,transparent 45%,#020b1455), url('/fleet/ayshu-monsoon-mobile.webp'); }
 .auth-form { background: #f3f6fa; }
+.admin-login {
+  grid-template-columns: minmax(0, 1.18fr) minmax(0, 1fr);
+  padding: 16px;
+  background: #080e15;
+  color: #f4f8fb;
+}
+.admin-login .auth-art {
+  border-radius: 18px;
+  padding: clamp(20px, 3vw, 44px);
+  background-color: #0d1924;
+  background-position: center;
+}
+.admin-login .auth-form {
+  align-content: center;
+  padding: clamp(20px, 4vw, 64px);
+  background: radial-gradient(ellipse at 50% 25%, #112433, transparent 68%);
+}
+.admin-login form {
+  width: min(100%, 440px);
+  gap: 16px;
+  padding: clamp(19px, 3vw, 36px);
+  border: 1px solid #293c4c;
+  border-radius: 20px;
+  background: #0e1822;
+  box-shadow: 0 24px 54px #0005;
+}
+.admin-login .login-back { display: inline-flex; align-items: center; gap: 7px; justify-self: start; font-size: .84rem; }
+.admin-login .text-link { color: #8bdff4; }
+.admin-login .text-link:hover { text-decoration: underline; }
+.admin-login .login-heading { display: grid; gap: 8px; margin: 4px 0 6px; }
+.admin-login .login-mark {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid #245369;
+  border-radius: 12px;
+  color: #65e0ff;
+  background: #102c3a;
+}
+.admin-login h1 { color: #f4f8fb; line-height: 1.1; }
+.admin-login p { color: #b9c8d4; font-size: .92rem; }
+.admin-login input {
+  min-height: 46px;
+  border-color: #334758;
+  background: #0a131d;
+  color: #f4f8fb;
+  color-scheme: dark;
+}
+.admin-login .message { border-color: #334758; background: #142737; color: #e3f1fa; }
+.admin-login .login-submit {
+  justify-content: space-between;
+  min-height: 48px;
+  background: #00bcea;
+  color: #06141c;
+}
+.admin-login .login-submit:hover { background: #83e8ff; }
+@media (max-width: 760px) {
+  .admin-login { grid-template-columns: 1fr; grid-template-rows: auto 1fr; padding: 10px; }
+  .admin-login .auth-art { min-height: clamp(168px, 42vw, 280px); background-position: center 42%; }
+  .admin-login .auth-form { align-content: start; padding: 0 10px 24px; }
+  .admin-login form { position: relative; margin-top: -22px; }
+}
 
 @media (max-width: 1120px) {
   .public-site .top nav { gap: 18px; }
@@ -412,17 +475,16 @@
   z-index: 4;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 46px;
-  padding: 0 15px;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
   border: 1px solid #ffffff6b;
-  border-radius: 999px;
+  border-radius: 50%;
   background: #000;
   color: #fff;
   box-shadow: 0 4px 16px #0006;
-  font-size: .85rem;
-  font-weight: 800;
 }
+.floating-whatsapp svg { width: 24px; height: 24px; }
 .floating-whatsapp:hover, .floating-whatsapp:focus-visible {
   border-color: var(--cyan);
   color: #fff;

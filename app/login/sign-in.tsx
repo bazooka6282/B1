@@ -1,6 +1,7 @@
 'use client';
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import { ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
 import { browserClient } from '../../lib/browser';
 
 export function SignIn({ configured }: { configured: boolean }) {
@@ -24,13 +25,17 @@ export function SignIn({ configured }: { configured: boolean }) {
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Please try again.'); }
     finally { setBusy(false); }
   }
-  return <form onSubmit={submit}><Link className="text-link" href="/">Back to BAZOOKA</Link>
-    <h1>{reset ? 'Reset password' : 'Admin sign in'}</h1>
-    <p>{reset ? 'Enter the email address for your account.' : 'Sign in to manage your fleet and accounts.'}</p>
+  return <form onSubmit={submit}>
+    <Link className="text-link login-back" href="/"><ArrowLeft size={17} aria-hidden="true" /> Back to BAZOOKA</Link>
+    <div className="login-heading">
+      <span className="login-mark"><ShieldCheck size={25} aria-hidden="true" /></span>
+      <h1>{reset ? 'Reset password' : 'Admin sign in'}</h1>
+      <p>{reset ? 'Enter the email address for your account.' : 'Manage your fleet, trips, and accounts.'}</p>
+    </div>
     <label className="field">Email address<input required type="email" autoComplete="email" name="email"/></label>
     {!reset && <label className="field">Password<input required type="password" autoComplete="current-password" name="password"/></label>}
     {(!configured || message) && <div role="status" className="message">{!configured ? 'Supabase configuration is pending.' : message}</div>}
-    <button className="button primary" disabled={!configured || busy}>{busy ? 'Please wait…' : reset ? 'Send reset link' : 'Sign in'}</button>
+    <button className="button primary login-submit" disabled={!configured || busy}>{busy ? 'Please wait…' : reset ? 'Send reset link' : 'Sign in'}<ArrowRight size={19} aria-hidden="true" /></button>
     <button type="button" className="text-link" onClick={() => { setReset(!reset); setMessage(''); }}>{reset ? 'Return to sign in' : 'Forgot password?'}</button>
   </form>;
 }
