@@ -391,3 +391,40 @@
 @media (max-width: 760px) {
   .contact-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+.hero-actions, .tp-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+.hero-service-link, .tp-call {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: #fff;
+  font-weight: 800;
+}
+.hero-service-link { text-decoration: underline; text-underline-offset: 4px; }
+.hero-service-link:hover, .tp-call:hover { color: var(--cyan); }
+.tp-services {
+  background: #08121b;
+  border-block: 1px solid var(--showcase-line);
+  padding-block: clamp(45px, 7vw, 90px);
+}
+.tp-services-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, .85fr);
+  align-items: center;
+  gap: clamp(20px, 5vw, 72px);
+}
+.public-site .tp-services h2 { font-size: clamp(2.6rem, 5vw, 5.4rem); }
+.tp-description { max-width: 36rem; margin: 18px 0; color: var(--showcase-green); line-height: 1.7; }
+.tp-services figure { overflow: hidden; margin: 0; border: 1px solid var(--showcase-line); border-radius: 5px; }
+.tp-services figure img { width: 100%; aspect-ratio: 3 / 2; object-fit: contain; }
+.tp-services figcaption a { min-height: 44px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
+.profile-enquiry { margin-top: 18px; }
+@media (max-width: 760px) {
+  .tp-services-layout { grid-template-columns: minmax(0, 1fr); }
+}

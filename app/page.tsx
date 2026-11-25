@@ -10,6 +10,8 @@ export const dynamic = 'force-dynamic';
 
 const phone = '+916282490768';
 const displayPhone = '+91 6282490768';
+const whatsapp = 'https://wa.me/' + phone.slice(1);
+const tpMessage = 'Hello BAZOOKA, I would like to enquire about TP bus service.\nTrip dates:\nPickup location:\nDestination:\nPassenger count:';
 
 const rainScenes: Record<string, string> = {
   '/fleet/ayshu-editorial.webp': 'ayshu',
@@ -30,7 +32,7 @@ export default async function Home() {
   const email = emailSetting ?? 'bazooka6282@gmail.com';
   const contactLinks = [
     { label: 'Call', detail: displayPhone, href: 'tel:' + phone, Icon: Phone },
-    { label: 'WhatsApp', detail: displayPhone, href: 'https://wa.me/' + phone.slice(1), Icon: MessageCircle },
+    { label: 'WhatsApp', detail: displayPhone, href: whatsapp, Icon: MessageCircle },
     { label: 'Email', detail: email, href: 'mailto:' + email, Icon: Mail },
   ];
   const fleet = vehicles.slice().sort((a, b) => showcaseOrder(a.registration) - showcaseOrder(b.registration));
@@ -45,6 +47,8 @@ export default async function Home() {
       registration: bus.registration,
     }];
   });
+  const serviceBus = fleet.find(bus => bus.category === 'TP' && photos(bus)[0]);
+  const servicePhoto = serviceBus && photos(serviceBus)[0];
   const shots = fleet.flatMap(bus => photos(bus).slice(0, 2).map(src => ({ src, name: bus.name, registration: bus.registration })));
 
   return <div className="public-site">
@@ -63,6 +67,24 @@ export default async function Home() {
             </Link>;
           })}</div>
           {!fleet.length && <p>No vehicles are currently listed.</p>}
+        </div>
+      </section>
+
+      <section id="tp-services" className="tp-services" aria-labelledby="tp-heading">
+        <div className="wrap tp-services-layout">
+          <div>
+            <p className="location"><BusFront size={16} aria-hidden="true" /> Private bus service in Kerala</p>
+            <h2 id="tp-heading">Temporary permit (TP) bus services</h2>
+            <p className="tp-description">BAZOOKA provides private bus services under temporary permits. Share your trip dates, pickup location, destination, and passenger count so we can confirm what’s available for your trip.</p>
+            <div className="tp-actions">
+              <a className="front-action" href={whatsapp + '?text=' + encodeURIComponent(tpMessage)}><MessageCircle size={18} aria-hidden="true" /> Enquire on WhatsApp</a>
+              <a className="tp-call" href={'tel:' + phone}><Phone size={18} aria-hidden="true" /> Call {displayPhone}</a>
+            </div>
+          </div>
+          {serviceBus && servicePhoto && <figure>
+            <img src={servicePhoto} alt={serviceBus.name + ', a BAZOOKA temporary permit bus'} loading="lazy" />
+            <figcaption><Link href={'/fleet/' + serviceBus.registration}>{serviceBus.name} · {numberPlate(serviceBus.registration)} <ArrowUpRight size={16} aria-hidden="true" /></Link></figcaption>
+          </figure>}
         </div>
       </section>
 
