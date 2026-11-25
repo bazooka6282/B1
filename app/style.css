@@ -404,6 +404,32 @@
   border-top: 1px solid var(--showcase-line);
   background: #080e15;
 }
+.floating-whatsapp {
+  position: fixed;
+  right: max(clamp(12px, 2.5vw, 36px), env(safe-area-inset-right));
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 15px;
+  border: 1px solid #ffffff6b;
+  border-radius: 999px;
+  background: #000;
+  color: #fff;
+  box-shadow: 0 4px 16px #0006;
+  font-size: .85rem;
+  font-weight: 800;
+}
+.floating-whatsapp:hover, .floating-whatsapp:focus-visible {
+  border-color: var(--cyan);
+  color: #fff;
+}
+.floating-whatsapp:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
 .contact-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

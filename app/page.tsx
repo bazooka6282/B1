@@ -108,5 +108,8 @@ export default async function Home() {
       </section>
     </main>
     <footer><div className="wrap footer"><Wordmark /><span>Private bus operations · Kerala, India</span><a href="https://webappzz.com/">Powered by Webappzz Technologies</a></div></footer>
+    <a className="floating-whatsapp" href={whatsapp} aria-label="Chat with BAZOOKA on WhatsApp">
+      <MessageCircle size={20} aria-hidden="true" /> WhatsApp
+    </a>
   </div>;
 }
