@@ -64,6 +64,6 @@ export default async function Home() {
 
       {shots.length > 0 && <section id="gallery" className="gallery-section"><div className="wrap"><h2>Fleet gallery</h2><Gallery shots={shots} /></div></section>}
     </main>
-    <footer id="contact"><div className="wrap footer"><Wordmark /><span>Private bus operations · Kerala, India</span>{contact && <a href={'mailto:' + contact}>Contact</a>}<Link href="/login">Admin Login</Link></div></footer>
+    <footer id="contact"><div className="wrap footer"><Wordmark /><span>Private bus operations · Kerala, India</span>{contact && <a href={'mailto:' + contact}>Contact</a>}<a href="https://webappzz.com/">Powered by Webappzz Technologies</a></div></footer>
   </div>;
 }
