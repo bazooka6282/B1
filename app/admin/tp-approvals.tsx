@@ -16,7 +16,8 @@ export function TpApprovals({ client, session, approvals, refresh }: {
 }) {
   const start = String(session.start_date);
   const end = String(session.end_date);
-  const latest = end < today() ? end : today();
+  const currentDate = today();
+  const latest = end < currentDate ? end : currentDate;
   const suggested = n(session, 'amount') / sessionDays(start, end);
   const [week, setWeek] = useState(() => tpWeekStart(latest < start ? start : latest));
   const [date, setDate] = useState('');
@@ -27,6 +28,7 @@ export function TpApprovals({ client, session, approvals, refresh }: {
   const sessionId = Number(session.id);
   const lastDay = shiftTpDate(week, 6);
   const rowsByDate = new Map(approvals?.map(row => [row.date, row]));
+  const futureDecision = date > currentDate;
 
   function changeWeek(offset: number) {
     setWeek(shiftTpDate(week, offset));
@@ -42,15 +44,28 @@ export function TpApprovals({ client, session, approvals, refresh }: {
     setError('');
     try {
       const source = client.from('tp_daily_approvals');
-      const result = removeDate
-        ? await source.delete().eq('session', sessionId).eq('date', removeDate).select('date')
-        : await source.insert({ session: sessionId, date, amount: skipReason ? 0 : Number(amount), skip_reason: skipReason || null }).select('date');
+      const recordDate = removeDate ?? date;
+      const existing = rowsByDate.get(recordDate);
+      const decision = { amount: skipReason ? 0 : Number(amount), skip_reason: skipReason || null };
+      let result;
+      if (existing) {
+        const change = removeDate ? source.delete() : source.update(decision);
+        const match = change.eq('session', sessionId).eq('date', recordDate).eq('amount', n(existing, 'amount'));
+        result = await (existing.skip_reason
+          ? match.eq('skip_reason', existing.skip_reason)
+          : match.is('skip_reason', null)).select('date');
+      } else {
+        result = await source.insert({ session: sessionId, date: recordDate, ...decision }).select('date');
+      }
       if (result.error?.code === '23505') {
         await refresh();
         throw new Error('This day already has a saved decision.');
       }
       if (result.error) throw result.error;
-      if (!result.data?.length) throw new Error('No approval was changed.');
+      if (!result.data?.length) {
+        await refresh();
+        throw new Error('This day changed since you opened it. Reopen it and try again.');
+      }
       await refresh();
       setDate('');
     } catch (error) {
@@ -64,7 +79,7 @@ export function TpApprovals({ client, session, approvals, refresh }: {
       <div className="panel-title">
         <h2 id="tp-approval-heading">Weekly review <small>{[session.reference, session.tp_vehicle_number].filter(Boolean).join(' · ')}</small></h2>
       </div>
-      <p>Approve days when you receive money. Skip leave, breakdowns, or unpaid days to record ₹0.</p>
+      <p>Use Edit to approve a missed payment, correct a saved amount, or mark a day as declined if the vehicle did not or will not run.</p>
       <div className="panel-title tp-week-navigation">
         <button type="button" className="button secondary" disabled={busy || week <= tpWeekStart(start)} onClick={() => changeWeek(-7)}>Previous week</button>
         <strong>{formatDate(week)} – {formatDate(lastDay)}</strong>
@@ -76,34 +91,38 @@ export function TpApprovals({ client, session, approvals, refresh }: {
           const dayDate = shiftTpDate(week, index);
           const entry = rowsByDate.get(dayDate);
           const outside = dayDate < start || dayDate > end;
-          const canReview = approvals && !outside && dayDate <= latest && session.status !== 'Cancelled';
-          const status = entry ? String(entry.skip_reason || 'Approved')
+          const canEdit = approvals && !outside && session.status !== 'Cancelled';
+          const status = entry ? (entry.skip_reason === 'Declined' ? 'Declined · vehicle not running' : String(entry.skip_reason || 'Approved'))
             : outside ? 'Outside session' : session.status === 'Cancelled' ? 'Cancelled'
             : dayDate > latest ? 'Upcoming' : approvals ? 'Pending' : 'Unavailable';
           return <tr key={dayDate}>
             <th scope="row">{day}</th><td>{formatDate(dayDate)}</td><td>{status}</td>
             <td>{entry ? inr(n(entry, 'amount')) : '—'}</td>
-            <td>{entry
-              ? <button type="button" className="text-link" disabled={busy} onClick={() => void save(undefined, dayDate)}>Clear</button>
-              : canReview && <button type="button" className="text-link" disabled={busy} onClick={() => {
+            <td><div className="row-actions">
+              {canEdit && <button type="button" className="text-link" disabled={busy} onClick={() => {
                 setDate(dayDate);
-                setAmount(suggested > 0 ? suggested.toFixed(2) : '');
-                setSkipReason('');
+                setAmount(entry && n(entry, 'amount') > 0 ? n(entry, 'amount').toFixed(2) : suggested > 0 ? suggested.toFixed(2) : '');
+                setSkipReason(dayDate > currentDate ? 'Declined' : String(entry?.skip_reason ?? ''));
                 setError('');
-              }}>Review</button>}
-            </td>
+              }}>Edit</button>}
+              {entry && <button type="button" className="text-link" disabled={busy} onClick={() => void save(undefined, dayDate)}>Clear</button>}
+            </div></td>
           </tr>;
         })}</tbody>
       </table></div>
-      {date && !rowsByDate.has(date) && <form onSubmit={save}>
+      {date && <form onSubmit={save}>
         <h3>{formatDate(date)}</h3>
         <div className="form-grid">
           <label className="field">Decision<select value={skipReason} disabled={busy} onChange={event => setSkipReason(event.target.value)}>
-            <option value="">Approve payment</option><option>Leave</option><option>Vehicle breakdown</option><option>No payment</option>
+            {!futureDecision && <><option value="">Approve payment</option><option>Leave</option><option>Vehicle breakdown</option><option>No payment</option></>}
+            <option value="Declined">Declined — vehicle not running</option>
           </select></label>
           {!skipReason && <label className="field">Amount received (₹)<input type="number" value={amount} min="0.01" max="999999999999.99" step="0.01" required disabled={busy} onChange={event => setAmount(event.target.value)} /></label>}
         </div>
-        <div className="modal-actions"><button className="button primary" disabled={busy}>{skipReason ? 'Skip day' : 'Approve revenue'}</button></div>
+        <div className="modal-actions">
+          <button type="button" className="button secondary" disabled={busy} onClick={() => setDate('')}>Cancel</button>
+          <button className="button primary" disabled={busy}>{skipReason === 'Declined' ? 'Mark declined' : skipReason ? 'Skip day' : 'Approve revenue'}</button>
+        </div>
       </form>}
       {error && <div className="message error" role="alert">{error}</div>}
     </section>;

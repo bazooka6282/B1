@@ -150,6 +150,7 @@ export function Editor({client,data,table,row,close,onSaved,onDelete,ratePresets
    <select {...props} value={value} onChange={event=>setValues({...values,[key]:event.target.value,...(key==='bus'?{session:null,...(table==='daily_accounts'?{route:null}:{})}:{})})}><option value="">{required?'Select':'None'}</option>{list.map(([id,name])=><option value={id} key={id}>{name}</option>)}</select>:
    tpSession&&(key==='start_date'||key==='end_date')?<input {...props} type="date" value={key==='start_date'?startDate:endDate} min={key==='end_date'?startDate||undefined:undefined} onChange={event=>setValues(current=>({...current,[key]:event.target.value}))}/>:
    key==='notes'?<textarea {...props} defaultValue={value}/>:
+   key==='tp_vehicle_number'?<input {...props} type="text" inputMode="text" autoCapitalize="characters" defaultValue={value} placeholder="KL 08 AL 4545"/>:
    type==='photo'?<input {...props} type="file" accept="image/jpeg,image/png,image/webp"/>:
    <input {...props} type={type==='money'?'number':type} defaultValue={value} min={type==='money'||type==='number'?0:undefined} step={type==='money'||key==='quantity'?'0.01':undefined}/>}</label>;
  })}</div>
