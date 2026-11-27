@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { BusFront } from 'lucide-react';
 import { Header } from '../../brand';
@@ -6,10 +8,31 @@ import { Gallery } from '../../gallery';
 import { getFleet } from '../../../lib/public-fleet';
 import { numberPlate, photos } from '../../../lib/fleet';
 import '../../showcase.css';
+import { siteImage } from '../../../lib/site';
 
-export default async function Profile({ params }: { params: Promise<{ registration: string }> }) {
+type ProfileProps = { params: Promise<{ registration: string }> };
+const findBus = cache(async (registration: string) => (await getFleet()).find(item => item.registration === registration));
+
+export async function generateMetadata({ params }: ProfileProps): Promise<Metadata> {
   const { registration } = await params;
-  const bus = (await getFleet()).find(item => item.registration === registration);
+  const bus = await findBus(registration);
+  if (!bus) notFound();
+  const title = bus.name + ' · ' + numberPlate(registration);
+  const description = 'See photos and details of ' + title + ', a ' + (bus.category === 'TP' ? 'temporary permit' : 'regular permit') + ' bus in the BAZOOKA fleet in Kerala.';
+  const path = '/fleet/' + registration;
+  const image = photos(bus)[0] ?? siteImage;
+  return {
+    title,
+    description,
+    alternates: { canonical: path },
+    openGraph: { title, description, url: path, siteName: 'BAZOOKA', type: 'website', locale: 'en_IN', images: [{ url: image, alt: title }] },
+    twitter: { card: 'summary_large_image', title, description, images: [image] },
+  };
+}
+
+export default async function Profile({ params }: ProfileProps) {
+  const { registration } = await params;
+  const bus = await findBus(registration);
   if (!bus) notFound();
 
   const shots = photos(bus).map(src => ({ src, name: bus.name, registration }));

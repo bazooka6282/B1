@@ -13,7 +13,7 @@ export function Gallery({ shots, captions = false }: { shots: Shot[]; captions?:
     <img src={item.src} alt={item.name} loading="lazy"/>
     {captions && <span>{item.name} <small>{numberPlate(item.registration)}</small></span>}
   </button>)}</div>
-    <dialog className="lightbox" ref={dialog} onKeyDown={event => { if (event.key === 'ArrowLeft') step(-1); if (event.key === 'ArrowRight') step(1); }}>
+    <dialog className="lightbox" aria-label="Fleet photo viewer" ref={dialog} onKeyDown={event => { if (event.key === 'ArrowLeft') step(-1); if (event.key === 'ArrowRight') step(1); }}>
       <div className="lightbox-bar"><button type="button" onClick={() => dialog.current?.close()} aria-label="Close gallery"><X/></button></div>
       {shot && <img src={shot.src} alt={shot.name}/>}
       <div className="lightbox-bar"><button onClick={() => step(-1)} aria-label="Previous photo"><ChevronLeft/></button><span>{shot?.name} · {numberPlate(shot?.registration ?? '')}</span><button onClick={() => step(1)} aria-label="Next photo"><ChevronRight/></button></div>

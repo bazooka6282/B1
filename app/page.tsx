@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { ArrowUpRight, BusFront, Mail, MessageCircle, Phone } from 'lucide-react';
 import { Header, Wordmark } from './brand';
 import { getFleet, getContact } from '../lib/public-fleet';
@@ -6,8 +7,10 @@ import { numberPlate, photos } from '../lib/fleet';
 import { Gallery } from './gallery';
 import { FleetHero } from './fleet-hero';
 import './showcase.css';
+import { instagramProfile, siteDescription, siteOrigin } from '../lib/site';
 
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { alternates: { canonical: '/' } };
 
 const phone = '+916282490768';
 const displayPhone = '+91 6282490768';
@@ -46,7 +49,7 @@ export default async function Home() {
     { label: 'Call', detail: displayPhone, href: 'tel:' + phone, Icon: Phone },
     { label: 'WhatsApp', detail: displayPhone, href: whatsappEnquiry, Icon: MessageCircle },
     { label: 'Email', detail: email, href: 'mailto:' + email, Icon: Mail },
-    { label: 'Instagram', detail: '@__team_bazooka_', href: 'https://www.instagram.com/__team_bazooka_?utm_source=ig_web_button_share_sheet&knvt=ZDNlZDc0MzIxNw==', Icon: InstagramIcon },
+    { label: 'Instagram', detail: '@__team_bazooka_', href: instagramProfile, Icon: InstagramIcon },
   ];
   const fleet = vehicles.slice().sort((a, b) => showcaseOrder(a.registration) - showcaseOrder(b.registration));
   const slides = fleet.flatMap(bus => {
@@ -66,8 +69,21 @@ export default async function Home() {
   const rentalBus = fleet.find(bus => bus.registration !== serviceBus?.registration && photos(bus)[0]);
   const rentalPhoto = rentalBus && photos(rentalBus)[0];
   const shots = fleet.flatMap(bus => photos(bus).slice(0, 2).map(src => ({ src, name: bus.name, registration: bus.registration })));
+  const organization = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': siteOrigin + '/#organization',
+    name: 'BAZOOKA',
+    url: siteOrigin + '/',
+    description: siteDescription,
+    logo: siteOrigin + '/brand-icon.png',
+    telephone: phone,
+    email,
+    sameAs: [instagramProfile],
+  };
 
   return <div className="public-site">
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organization).replace(/</g, '\\u003c') }} />
     <Header overlay />
     <main>
       <FleetHero slides={slides} />

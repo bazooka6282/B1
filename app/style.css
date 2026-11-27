@@ -255,7 +255,7 @@
 .cinema-controls { position: absolute; left: 0; right: 0; bottom: clamp(27px, 4vw, 67px); display: flex; justify-content: space-between; align-items: end; gap: 12px; }
 .cinema-progress p { margin: 0; color: #edf4fa; font-size: .88rem; }
 .cinema-progress strong { font-size: 1.14rem; font-style: italic; }
-.cinema-progress p a { margin-left: 8px; color: #dbe5ec; }
+.cinema-progress p a { margin-left: 8px; color: #dbe5ec; text-decoration: underline; text-underline-offset: 3px; }
 .cinema-progress p a:hover { color: var(--cyan); }
 .cinema-dots, .cinema-arrows { display: flex; gap: 8px; }
 .cinema-dots button { border: 0; min-height: 32px; width: 44px; background: none; padding: 0; }
