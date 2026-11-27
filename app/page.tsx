@@ -14,6 +14,8 @@ const displayPhone = '+91 6282490768';
 const whatsapp = 'https://wa.me/' + phone.slice(1);
 const tpMessage = 'Hello BAZOOKA, I would like to enquire about TP bus service.\nTrip dates:\nPickup location:\nDestination:\nPassenger count:';
 const whatsappEnquiry = whatsapp + '?text=' + encodeURIComponent(tpMessage);
+const rentalMessage = 'Hello BAZOOKA, I would like to enquire about renting a bus.\nTrip dates:\nPickup location:\nDestination:\nPassenger count:';
+const whatsappRental = whatsapp + '?text=' + encodeURIComponent(rentalMessage);
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -61,6 +63,8 @@ export default async function Home() {
   const serviceBus = fleet.find(bus => bus.category === 'TP' && photos(bus)[1])
     ?? fleet.find(bus => bus.category === 'TP' && photos(bus)[0]);
   const servicePhoto = serviceBus && (photos(serviceBus)[1] ?? photos(serviceBus)[0]);
+  const rentalBus = fleet.find(bus => bus.registration !== serviceBus?.registration && photos(bus)[0]);
+  const rentalPhoto = rentalBus && photos(rentalBus)[0];
   const shots = fleet.flatMap(bus => photos(bus).slice(0, 2).map(src => ({ src, name: bus.name, registration: bus.registration })));
 
   return <div className="public-site">
@@ -99,7 +103,24 @@ export default async function Home() {
             <h2 id="tp-heading">Temporary permit bus services</h2>
             <p>Share your trip dates, pickup point, destination, and passenger count. We’ll check which buses are available for your trip.</p>
             <div className="tp-actions">
-              <a className="kerala-booking-link" href={whatsappEnquiry}><MessageCircle size={18} aria-hidden="true" /> Enquire on WhatsApp</a>
+              <a className="kerala-booking-link" href={whatsappEnquiry}><MessageCircle size={18} aria-hidden="true" /> Enquire about TP service</a>
+              <a className="tp-call" href={'tel:' + phone}><Phone size={18} aria-hidden="true" /> Call {displayPhone}</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="bus-rental" className="kerala-services rental-service" aria-labelledby="rental-heading">
+        <div className="wrap kerala-services-layout">
+          {rentalBus && rentalPhoto && <figure>
+            <img src={rentalPhoto} alt={rentalBus.name + ' from the BAZOOKA fleet'} loading="lazy" />
+            <figcaption><Link href={'/fleet/' + rentalBus.registration}>{rentalBus.name} · {numberPlate(rentalBus.registration)} <ArrowUpRight size={16} aria-hidden="true" /></Link></figcaption>
+          </figure>}
+          <div className="kerala-service-copy">
+            <h2 id="rental-heading">Bus rental for group trips</h2>
+            <p>Rent a private bus for a family function, outing, or group trip. Tell us when and where you’re travelling and how many people are coming so we can check availability and discuss the rental.</p>
+            <div className="tp-actions">
+              <a className="kerala-booking-link" href={whatsappRental}><MessageCircle size={18} aria-hidden="true" /> Enquire about bus rental</a>
               <a className="tp-call" href={'tel:' + phone}><Phone size={18} aria-hidden="true" /> Call {displayPhone}</a>
             </div>
           </div>
@@ -110,7 +131,11 @@ export default async function Home() {
         <div className="wrap kerala-about-layout">
           <div className="kerala-about-head">
             <div><p className="kerala-location">Thrissur, Kerala</p><h2 id="about-heading">About BAZOOKA</h2></div>
-            <div><p>BAZOOKA operates a private fleet in Kerala. The buses share a blue livery, and each carries its own windshield artwork and details.</p><Link className="kerala-text-link" href="#contact">Contact BAZOOKA <ArrowUpRight size={17} aria-hidden="true" /></Link></div>
+            <div>
+              <p>BAZOOKA is a private bus operator from Thrissur, Kerala. We provide <Link href="#tp-services">temporary permit (TP) bus services</Link> and <Link href="#bus-rental">private bus rentals</Link> for group travel.</p>
+              <p>Every bus in our fleet wears BAZOOKA blue, with its own windshield lettering and artwork. Get in touch with your trip dates, pickup point, destination, and group size, and we’ll help you find an available bus.</p>
+              <Link className="kerala-text-link" href="#contact">Contact BAZOOKA <ArrowUpRight size={17} aria-hidden="true" /></Link>
+            </div>
           </div>
           <figure>
             <img src="/fleet/road-cleared.webp" alt="A BAZOOKA bus on a tree-lined Kerala road" loading="lazy" width={1440} height={960} />

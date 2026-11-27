@@ -81,6 +81,13 @@
   font-weight: 800;
 }
 .kerala-booking-link:hover { background: #e1f4ff; }
+.rental-service {
+  padding-block: clamp(34px, 6vw, 88px);
+  border-top: 1px solid #95b3cc80;
+  background: #143652;
+}
+.rental-service .kerala-services-layout:has(figure) { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+.rental-service .kerala-services-layout figure { order: 0; }
 
 .kerala-about { background: #e6eff7; }
 .kerala-about-layout, .kerala-contact-layout {
@@ -91,6 +98,8 @@
 }
 .kerala-about-head { display: grid; gap: 20px; }
 .kerala-about-head .kerala-location { margin-bottom: 12px; }
+.kerala-about-head p + p { margin-top: 12px; }
+.kerala-about-head p a { text-decoration: underline; text-underline-offset: 3px; }
 .kerala-about img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
 .kerala-text-link { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; min-height: 40px; color: var(--accent); font-weight: 800; text-decoration: underline; text-underline-offset: 4px; }
 
@@ -144,6 +153,8 @@
   .kerala-fleet-grid .kerala-bus, .kerala-fleet-grid[data-featured] .kerala-bus:nth-child(2) { grid-column: span 1; }
   .kerala-fleet-grid[data-featured] .kerala-bus:first-child { grid-column: 1 / -1; }
   .kerala-services-layout:has(figure), .kerala-about-layout, .kerala-contact-layout { grid-template-columns: minmax(0, 1fr); }
+  .rental-service .kerala-services-layout:has(figure) { grid-template-columns: minmax(0, 1fr); }
+  .rental-service .kerala-services-layout figure { order: 1; }
   .kerala-photo-grid button:is(:first-child, :last-child) img { aspect-ratio: 3 / 2; }
   .kerala-contact { padding-bottom: 68px; }
 }

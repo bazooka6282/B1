@@ -6,7 +6,7 @@ import './style.css';
 
 export const metadata: Metadata = {
   title: { default: 'BAZOOKA | Kerala Bus Fleet', template: '%s | BAZOOKA' },
-  description: 'Explore the BAZOOKA fleet and enquire about private bus services under temporary permits in Kerala.',
+  description: 'Explore the BAZOOKA fleet and enquire about temporary permit bus services and private bus rentals in Kerala.',
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
