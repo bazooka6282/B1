@@ -1,0 +1,150 @@
+.kerala-section {
+  --paper: #f1eee3;
+  --ink: #142b22;
+  --rule: #bdbfb0;
+  --yellow: #f2cd61;
+  padding-block: clamp(48px, 7vw, 104px);
+}
+.public-site .kerala-section h2 {
+  font: 800 clamp(2.55rem, 5.6vw, 5.25rem)/.98 "Barlow Condensed", "Arial Narrow", sans-serif;
+  letter-spacing: -.015em;
+}
+.kerala-section p { margin: 0; }
+.kerala-section [lang="ml"] { font-family: "Noto Sans Malayalam", "Nirmala UI", Kartika, sans-serif; }
+.kerala-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: clamp(20px, 3vw, 38px);
+  border-bottom: 1px solid var(--rule);
+}
+.kerala-section-head p { font-size: .89rem; }
+.kerala-fleet, .kerala-about, .kerala-contact { background: var(--paper); color: var(--ink); }
+.kerala-fleet-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 26px);
+}
+.kerala-bus {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  border-bottom: 1px solid var(--rule);
+}
+.kerala-fleet-grid[data-featured] .kerala-bus:first-child { grid-column: span 2; grid-row: span 2; }
+.kerala-bus-photo { position: relative; overflow: hidden; aspect-ratio: 3 / 2; background: #dee2d8; }
+.kerala-fleet-grid[data-featured] .kerala-bus:first-child .kerala-bus-photo { aspect-ratio: auto; min-height: 260px; }
+.kerala-bus-photo img, .kerala-photo-grid img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.kerala-bus-photo img { position: absolute; inset: 0; }
+.kerala-bus:hover h3, .kerala-bus:focus-visible h3 { text-decoration: underline; text-underline-offset: .16em; }
+.kerala-bus-caption { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: center; padding: 10px 0 12px; }
+.kerala-bus-caption h3 { margin: 0 0 2px; font-size: clamp(1.06rem, 2vw, 1.52rem); }
+.kerala-bus-caption span, .kerala-photo-grid small { font-family: ui-monospace, monospace; font-size: .8rem; }
+.kerala-bus-caption small { grid-row: 2; color: #43594e; font-size: .75rem; }
+.kerala-bus-caption svg { grid-column: 2; grid-row: 1 / span 2; }
+
+.kerala-services { background: #193b31; color: #faf5e7; }
+.kerala-services-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(24px, 6vw, 88px);
+}
+.kerala-services-layout:has(figure) { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+.kerala-services figure, .kerala-about figure { margin: 0; }
+.kerala-services figure img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
+.kerala-services figcaption a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 44px;
+  border-bottom: 1px solid #abc0a97d;
+  font-size: .85rem;
+}
+.kerala-location { font-size: .88rem; font-weight: 800; }
+.kerala-services .kerala-location { color: var(--yellow); margin-bottom: 12px; }
+.kerala-service-copy h2 { max-width: 11ch; }
+.kerala-service-copy h2 + p, .kerala-about-head h2 + p, .kerala-about-head > div + div p { max-width: 43ch; line-height: 1.65; }
+.kerala-service-copy h2 + p { margin: 18px 0 22px; color: #e1e7dc; }
+.kerala-booking-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 46px;
+  gap: 8px;
+  padding: 8px 13px;
+  background: var(--yellow);
+  color: var(--ink);
+  font-weight: 800;
+}
+.kerala-booking-link:hover { background: #ffe396; }
+
+.kerala-about-head, .kerala-contact-layout {
+  display: grid;
+  grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+  gap: clamp(18px, 5vw, 70px);
+  align-items: end;
+}
+.kerala-about-head .kerala-location { margin-bottom: 12px; }
+.kerala-about figure { margin-top: 26px; }
+.kerala-about img { display: block; width: 100%; height: auto; aspect-ratio: 2.25; object-fit: cover; object-position: center 46%; }
+.kerala-about figcaption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.kerala-about q { font-size: clamp(1.1rem, 2.6vw, 1.9rem); font-weight: 750; }
+.kerala-about figcaption span { font-size: .85rem; }
+.kerala-text-link { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; min-height: 40px; font-weight: 800; text-decoration: underline; text-underline-offset: 4px; }
+
+.kerala-gallery { background: #102820; color: #faf5e7; --rule: #718c7b; }
+.kerala-photo-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 12px; }
+.kerala-photo-grid button {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+}
+.kerala-photo-grid button:first-child, .kerala-photo-grid button:last-child { grid-column: span 2; }
+.kerala-photo-grid img { height: auto; aspect-ratio: 3 / 2; background: #0a1914; }
+.kerala-photo-grid button:is(:first-child, :last-child) img { flex: 1; min-height: 0; aspect-ratio: 2.4; }
+.kerala-photo-grid button > span { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px; width: 100%; padding: 7px 0; border-bottom: 1px solid var(--rule); font-weight: 800; }
+.kerala-photo-grid button:hover > span { border-color: var(--yellow); }
+.kerala-photo-grid small { color: #c4d4c7; }
+
+.kerala-contact-layout { align-items: start; }
+.kerala-contact-layout h2 + p { margin-top: 14px; }
+.kerala-contact-list { border-top: 1px solid var(--rule); }
+.kerala-contact-link {
+  display: grid;
+  grid-template-columns: 22px minmax(74px, .45fr) minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  min-height: 55px;
+  padding: 9px 4px;
+  border-bottom: 1px solid var(--rule);
+}
+.kerala-contact-link span { overflow-wrap: anywhere; font-size: .9rem; }
+.kerala-contact-link:hover { background: #e6e7db; }
+
+@media (max-width: 760px) {
+  .kerala-fleet-grid, .kerala-photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kerala-fleet-grid[data-featured] .kerala-bus:first-child { grid-row: auto; }
+  .kerala-fleet-grid[data-featured] .kerala-bus:first-child .kerala-bus-photo { aspect-ratio: 3 / 2; min-height: 0; }
+  .kerala-services-layout:has(figure), .kerala-about-head, .kerala-contact-layout { grid-template-columns: minmax(0, 1fr); }
+  .kerala-services-layout figure { order: 1; }
+  .kerala-about img { aspect-ratio: 3 / 2; }
+  .kerala-photo-grid button:is(:first-child, :last-child) img { aspect-ratio: 3 / 2; }
+  .kerala-contact { padding-bottom: 68px; }
+}

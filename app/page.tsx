@@ -1,10 +1,11 @@
 import Link from 'next/link';
-import { ArrowRight, ArrowUpRight, BusFront, Mail, MessageCircle, Phone } from 'lucide-react';
+import { ArrowUpRight, BusFront, Mail, MessageCircle, Phone } from 'lucide-react';
 import { Header, Wordmark } from './brand';
 import { getFleet, getContact } from '../lib/public-fleet';
 import { numberPlate, photos } from '../lib/fleet';
 import { Gallery } from './gallery';
 import { FleetHero } from './fleet-hero';
+import './showcase.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,8 +58,9 @@ export default async function Home() {
       registration: bus.registration,
     }];
   });
-  const serviceBus = fleet.find(bus => bus.category === 'TP' && photos(bus)[0]);
-  const servicePhoto = serviceBus && photos(serviceBus)[0];
+  const serviceBus = fleet.find(bus => bus.category === 'TP' && photos(bus)[1])
+    ?? fleet.find(bus => bus.category === 'TP' && photos(bus)[0]);
+  const servicePhoto = serviceBus && (photos(serviceBus)[1] ?? photos(serviceBus)[0]);
   const shots = fleet.flatMap(bus => photos(bus).slice(0, 2).map(src => ({ src, name: bus.name, registration: bus.registration })));
 
   return <div className="public-site">
@@ -66,51 +68,71 @@ export default async function Home() {
     <main>
       <FleetHero slides={slides} />
 
-      <section id="fleet" className="fleet-section">
+      <section id="fleet" className="kerala-fleet kerala-section" aria-labelledby="fleet-heading">
         <div className="wrap">
-          <div className="section-title cinema-fleet-title"><h2>Our fleet</h2><Link href="#fleet-list">View all buses <ArrowRight size={20}/></Link></div>
-          <div className="fleet-grid" id="fleet-list">{fleet.map(bus => {
+          <header className="kerala-section-head">
+            <h2 id="fleet-heading">Our fleet</h2>
+            <p lang="ml">നമ്മുടെ വണ്ടികൾ</p>
+          </header>
+          <div className="kerala-fleet-grid" id="fleet-list" data-featured={fleet.length >= 3 || undefined}>{fleet.map(bus => {
             const photo = photos(bus)[0];
-            return <Link key={bus.registration} href={'/fleet/' + bus.registration} className="vehicle-card">
-              <div className="vehicle-image">{photo ? <img src={photo} alt={bus.name + ' ' + numberPlate(bus.registration)} loading="lazy" /> : <div className="no-photo"><BusFront size={42} /><span>Photo pending</span></div>}</div>
-              <div className="vehicle-info"><div><small>{bus.category === 'TP' ? 'Temporary permit' : 'Regular permit'}</small><h3>{bus.name}</h3><span>{numberPlate(bus.registration)}</span></div><ArrowUpRight size={20} /></div>
+            return <Link key={bus.registration} href={'/fleet/' + bus.registration} className="kerala-bus">
+              <div className="kerala-bus-photo">{photo ? <img src={photo} alt={bus.name + ' ' + numberPlate(bus.registration)} loading="lazy" /> : <div className="no-photo"><BusFront size={36} /><span>Photo pending</span></div>}</div>
+              <div className="kerala-bus-caption">
+                <div><h3>{bus.name}</h3><span>{numberPlate(bus.registration)}</span></div>
+                <small>{bus.category === 'TP' ? 'Temporary permit' : 'Regular permit'}</small>
+                <ArrowUpRight size={18} aria-hidden="true" />
+              </div>
             </Link>;
           })}</div>
           {!fleet.length && <p>No vehicles are currently listed.</p>}
         </div>
       </section>
 
-      <section id="tp-services" className="tp-services" aria-labelledby="tp-heading">
-        <div className="wrap tp-services-layout">
-          <div>
-            <p className="location"><BusFront size={16} aria-hidden="true" /> Private bus service in Kerala</p>
-            <h2 id="tp-heading">Temporary permit (TP) bus services</h2>
-            <p className="tp-description">BAZOOKA provides private bus services under temporary permits. Share your trip dates, pickup location, destination, and passenger count so we can confirm what’s available for your trip.</p>
-            <div className="tp-actions">
-              <a className="front-action" href={whatsappEnquiry}><MessageCircle size={18} aria-hidden="true" /> Enquire on WhatsApp</a>
-              <a className="tp-call" href={'tel:' + phone}><Phone size={18} aria-hidden="true" /> Call {displayPhone}</a>
-            </div>
-          </div>
+      <section id="tp-services" className="kerala-services kerala-section" aria-labelledby="tp-heading">
+        <div className="wrap kerala-services-layout">
           {serviceBus && servicePhoto && <figure>
             <img src={servicePhoto} alt={serviceBus.name + ', a BAZOOKA temporary permit bus'} loading="lazy" />
             <figcaption><Link href={'/fleet/' + serviceBus.registration}>{serviceBus.name} · {numberPlate(serviceBus.registration)} <ArrowUpRight size={16} aria-hidden="true" /></Link></figcaption>
           </figure>}
+          <div className="kerala-service-copy">
+            <p className="kerala-location">Private bus service in Kerala</p>
+            <h2 id="tp-heading">Temporary permit bus services</h2>
+            <p>Share your trip dates, pickup point, destination, and passenger count. We’ll check which buses are available for your trip.</p>
+            <div className="tp-actions">
+              <a className="kerala-booking-link" href={whatsappEnquiry}><MessageCircle size={18} aria-hidden="true" /> Enquire on WhatsApp</a>
+              <a className="tp-call" href={'tel:' + phone}><Phone size={18} aria-hidden="true" /> Call {displayPhone}</a>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section id="about" className="wrap fleet-story">
-        <img src="/fleet/road-cleared.webp" alt="A BAZOOKA bus on a tree-lined Kerala road" loading="lazy" width={1440} height={960} />
-        <div><h2>About BAZOOKA</h2><p>BAZOOKA operates a private fleet in Kerala. The buses share a blue livery, and each carries its own windshield artwork and details.</p><Link className="front-action" href="#contact">Contact BAZOOKA <ArrowUpRight size={17} /></Link></div>
+      <section id="about" className="kerala-about kerala-section" aria-labelledby="about-heading">
+        <div className="wrap">
+          <div className="kerala-about-head">
+            <div><p className="kerala-location" lang="ml">തൃശ്ശൂർ, കേരളം</p><h2 id="about-heading">About BAZOOKA</h2></div>
+            <div><p>BAZOOKA operates a private fleet in Kerala. The buses share a blue livery, and each carries its own windshield artwork and details.</p><Link className="kerala-text-link" href="#contact">Contact BAZOOKA <ArrowUpRight size={17} aria-hidden="true" /></Link></div>
+          </div>
+          <figure>
+            <img src="/fleet/road-cleared.webp" alt="A BAZOOKA bus on a tree-lined Kerala road" loading="lazy" width={1440} height={960} />
+            <figcaption><q lang="ml">ഓരോ വണ്ടിക്കും ഓരോ മുഖം.</q><span>Each bus has a face of its own.</span></figcaption>
+          </figure>
+        </div>
       </section>
 
-      {shots.length > 0 && <section id="gallery" className="gallery-section"><div className="wrap"><h2>Fleet gallery</h2><Gallery shots={shots} /></div></section>}
-      <section id="contact" className="fleet-contact" aria-labelledby="contact-heading">
+      {shots.length > 0 && <section id="gallery" className="kerala-gallery kerala-section" aria-labelledby="gallery-heading">
         <div className="wrap">
-          <h2 id="contact-heading">Contact BAZOOKA</h2>
-          <div className="contact-grid">
-            {contactLinks.map(({ label, detail, href, Icon }) => <a className="contact-card" key={label} href={href}>
+          <header className="kerala-section-head"><h2 id="gallery-heading">Fleet gallery</h2><p>Open any photo for a closer look.</p></header>
+          <Gallery shots={shots} captions />
+        </div>
+      </section>}
+      <section id="contact" className="kerala-contact kerala-section" aria-labelledby="contact-heading">
+        <div className="wrap kerala-contact-layout">
+          <div><h2 id="contact-heading">Contact BAZOOKA</h2><p lang="ml">ബന്ധപ്പെടാം</p></div>
+          <div className="kerala-contact-list">
+            {contactLinks.map(({ label, detail, href, Icon }) => <a className="kerala-contact-link" key={label} href={href}>
               <Icon size={20} aria-hidden="true" />
-              <span><strong>{label}</strong><span className="contact-detail">{detail}</span></span>
+              <strong>{label}</strong><span>{detail}</span>
               <ArrowUpRight size={17} aria-hidden="true" />
             </a>)}
           </div>
