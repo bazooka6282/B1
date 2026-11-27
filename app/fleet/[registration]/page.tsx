@@ -5,6 +5,7 @@ import { Header } from '../../brand';
 import { Gallery } from '../../gallery';
 import { getFleet } from '../../../lib/public-fleet';
 import { numberPlate, photos } from '../../../lib/fleet';
+import '../../showcase.css';
 
 export default async function Profile({ params }: { params: Promise<{ registration: string }> }) {
   const { registration } = await params;
@@ -12,7 +13,7 @@ export default async function Profile({ params }: { params: Promise<{ registrati
   if (!bus) notFound();
 
   const shots = photos(bus).map(src => ({ src, name: bus.name, registration }));
-  return <div className="public-site">
+  return <div className="public-site showcase-profile">
     <Header />
     <main className="wrap vehicle-profile">
       <Link className="back-link" href="/#fleet">Back to fleet</Link>

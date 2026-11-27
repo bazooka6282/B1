@@ -72,9 +72,8 @@ export default async function Home() {
         <div className="wrap">
           <header className="kerala-section-head">
             <h2 id="fleet-heading">Our fleet</h2>
-            <p lang="ml">നമ്മുടെ വണ്ടികൾ</p>
           </header>
-          <div className="kerala-fleet-grid" id="fleet-list" data-featured={fleet.length >= 3 || undefined}>{fleet.map(bus => {
+          <div className="kerala-fleet-grid" id="fleet-list" data-featured={fleet.length >= 5 || undefined}>{fleet.map(bus => {
             const photo = photos(bus)[0];
             return <Link key={bus.registration} href={'/fleet/' + bus.registration} className="kerala-bus">
               <div className="kerala-bus-photo">{photo ? <img src={photo} alt={bus.name + ' ' + numberPlate(bus.registration)} loading="lazy" /> : <div className="no-photo"><BusFront size={36} /><span>Photo pending</span></div>}</div>
@@ -108,14 +107,13 @@ export default async function Home() {
       </section>
 
       <section id="about" className="kerala-about kerala-section" aria-labelledby="about-heading">
-        <div className="wrap">
+        <div className="wrap kerala-about-layout">
           <div className="kerala-about-head">
-            <div><p className="kerala-location" lang="ml">തൃശ്ശൂർ, കേരളം</p><h2 id="about-heading">About BAZOOKA</h2></div>
+            <div><p className="kerala-location">Thrissur, Kerala</p><h2 id="about-heading">About BAZOOKA</h2></div>
             <div><p>BAZOOKA operates a private fleet in Kerala. The buses share a blue livery, and each carries its own windshield artwork and details.</p><Link className="kerala-text-link" href="#contact">Contact BAZOOKA <ArrowUpRight size={17} aria-hidden="true" /></Link></div>
           </div>
           <figure>
             <img src="/fleet/road-cleared.webp" alt="A BAZOOKA bus on a tree-lined Kerala road" loading="lazy" width={1440} height={960} />
-            <figcaption><q lang="ml">ഓരോ വണ്ടിക്കും ഓരോ മുഖം.</q><span>Each bus has a face of its own.</span></figcaption>
           </figure>
         </div>
       </section>
@@ -128,7 +126,7 @@ export default async function Home() {
       </section>}
       <section id="contact" className="kerala-contact kerala-section" aria-labelledby="contact-heading">
         <div className="wrap kerala-contact-layout">
-          <div><h2 id="contact-heading">Contact BAZOOKA</h2><p lang="ml">ബന്ധപ്പെടാം</p></div>
+          <div><h2 id="contact-heading">Contact BAZOOKA</h2><p>For bus availability and trip enquiries.</p></div>
           <div className="kerala-contact-list">
             {contactLinks.map(({ label, detail, href, Icon }) => <a className="kerala-contact-link" key={label} href={href}>
               <Icon size={20} aria-hidden="true" />
@@ -139,7 +137,7 @@ export default async function Home() {
         </div>
       </section>
     </main>
-    <footer><div className="wrap footer"><Wordmark /><span>Private bus operations · Kerala, India</span><a href="https://webappzz.com/">Powered by Webappzz Technologies</a></div></footer>
+    <footer className="showcase-footer"><div className="wrap footer"><Wordmark /><span>Private bus operations · Kerala, India</span><a href="https://webappzz.com/">Powered by Webappzz Technologies</a></div></footer>
     <a className="floating-whatsapp" href={whatsappEnquiry} aria-label="Chat with BAZOOKA on WhatsApp">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M12 2a10 10 0 0 0-8.63 15.06L2 22l5.09-1.33A10 10 0 1 0 12 2zm0 18.3a8.3 8.3 0 0 1-4.64-1.42l-2.95.77.79-2.86A8.3 8.3 0 1 1 12 20.3z" />
