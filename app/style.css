@@ -466,6 +466,38 @@
 .status.expired { background: #fae4e4; color: #912f39; }
 #extend-tp-heading + button { align-self: start; }
 .extend-tp-form { display: grid; gap: 12px; }
+.admin-main, .admin-content > *, .admin .field, .admin .field :is(input, select, textarea) {
+  min-inline-size: 0;
+}
+.admin .field :is(input, select, textarea) {
+  box-sizing: border-box;
+  max-inline-size: 100%;
+}
+@media (max-width: 750px) {
+  .admin .filters { gap: 12px; padding: 12px; }
+  .admin .filters > .field:first-child { grid-column: 1 / -1; }
+  .admin .field :is(input, select, textarea), .admin .panel-title :is(input, select) {
+    font-size: 16px;
+  }
+  .admin .field input[type="date"] {
+    display: block;
+    inline-size: 100%;
+    min-block-size: 44px;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .admin .field input[type="date"]::-webkit-date-and-time-value {
+    min-inline-size: 0;
+    min-block-size: 1.4em;
+    text-align: start;
+  }
+  .admin .panel-title, .admin .admin-title { flex-wrap: wrap; }
+  .admin .panel-title :is(input, select) { flex: 1 1 150px; max-width: 100%; min-width: 0; }
+  .admin .counters strong { overflow-wrap: anywhere; }
+}
+@media (max-width: 360px) {
+  .admin .filters { grid-template-columns: minmax(0, 1fr); }
+}
 @media (max-width: 480px) {
   .tp-week-navigation strong { order: -1; flex-basis: 100%; }
 }
