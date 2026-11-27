@@ -14,11 +14,20 @@ export const metadata: Metadata = { alternates: { canonical: '/' } };
 
 const phone = '+916282490768';
 const displayPhone = '+91 6282490768';
+const alternatePhone = '+918606144244';
+const displayAlternatePhone = '+91 86061 44244';
 const whatsapp = 'https://wa.me/' + phone.slice(1);
 const tpMessage = 'Hello BAZOOKA, I would like to enquire about TP bus service.\nTrip dates:\nPickup location:\nDestination:\nPassenger count:';
 const whatsappEnquiry = whatsapp + '?text=' + encodeURIComponent(tpMessage);
 const rentalMessage = 'Hello BAZOOKA, I would like to enquire about renting a bus.\nTrip dates:\nPickup location:\nDestination:\nPassenger count:';
 const whatsappRental = whatsapp + '?text=' + encodeURIComponent(rentalMessage);
+
+function EnquiryCalls() {
+  return <>
+    <a className="tp-call" href={'tel:' + phone}><Phone size={18} aria-hidden="true" /> Call {displayPhone}</a>
+    <a className="tp-call" href={'tel:' + alternatePhone}><Phone size={18} aria-hidden="true" /> Call {displayAlternatePhone}</a>
+  </>;
+}
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -47,6 +56,7 @@ export default async function Home() {
   const email = emailSetting ?? 'bazooka6282@gmail.com';
   const contactLinks = [
     { label: 'Call', detail: displayPhone, href: 'tel:' + phone, Icon: Phone },
+    { label: 'Alternate call', detail: displayAlternatePhone, href: 'tel:' + alternatePhone, Icon: Phone },
     { label: 'WhatsApp', detail: displayPhone, href: whatsappEnquiry, Icon: MessageCircle },
     { label: 'Email', detail: email, href: 'mailto:' + email, Icon: Mail },
     { label: 'Instagram', detail: '@__team_bazooka_', href: instagramProfile, Icon: InstagramIcon },
@@ -77,7 +87,7 @@ export default async function Home() {
     url: siteOrigin + '/',
     description: siteDescription,
     logo: siteOrigin + '/brand-icon.png',
-    telephone: phone,
+    telephone: [phone, alternatePhone],
     email,
     sameAs: [instagramProfile],
   };
@@ -120,7 +130,7 @@ export default async function Home() {
             <p>Share your trip dates, pickup point, destination, and passenger count. We’ll check which buses are available for your trip.</p>
             <div className="tp-actions">
               <a className="kerala-booking-link" href={whatsappEnquiry}><MessageCircle size={18} aria-hidden="true" /> Enquire about TP service</a>
-              <a className="tp-call" href={'tel:' + phone}><Phone size={18} aria-hidden="true" /> Call {displayPhone}</a>
+              <EnquiryCalls />
             </div>
           </div>
         </div>
@@ -137,7 +147,7 @@ export default async function Home() {
             <p>Rent a private bus for a family function, outing, or group trip. Tell us when and where you’re travelling and how many people are coming so we can check availability and discuss the rental.</p>
             <div className="tp-actions">
               <a className="kerala-booking-link" href={whatsappRental}><MessageCircle size={18} aria-hidden="true" /> Enquire about bus rental</a>
-              <a className="tp-call" href={'tel:' + phone}><Phone size={18} aria-hidden="true" /> Call {displayPhone}</a>
+              <EnquiryCalls />
             </div>
           </div>
         </div>
