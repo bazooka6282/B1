@@ -508,7 +508,7 @@
 }
 .contact-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-top: clamp(22px, 3vw, 40px);
 }
@@ -525,7 +525,10 @@
 .contact-card:hover { border-color: var(--cyan); }
 .contact-card svg { color: var(--cyan); }
 .contact-detail { display: block; margin-top: 3px; color: var(--showcase-green); overflow-wrap: anywhere; }
-@media (max-width: 760px) {
+@media (max-width: 1100px) {
+  .contact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
   .contact-grid { grid-template-columns: minmax(0, 1fr); }
 }
 

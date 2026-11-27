@@ -14,6 +14,14 @@ const whatsapp = 'https://wa.me/' + phone.slice(1);
 const tpMessage = 'Hello BAZOOKA, I would like to enquire about TP bus service.\nTrip dates:\nPickup location:\nDestination:\nPassenger count:';
 const whatsappEnquiry = whatsapp + '?text=' + encodeURIComponent(tpMessage);
 
+function InstagramIcon({ size = 20 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <rect x="3" y="3" width="18" height="18" rx="5" />
+    <circle cx="12" cy="12" r="4" />
+    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+  </svg>;
+}
+
 const rainScenes: Record<string, string> = {
   '/fleet/ayshu-editorial.webp': 'ayshu',
   '/fleet/feemol-editorial.webp': 'feemol',
@@ -35,6 +43,7 @@ export default async function Home() {
     { label: 'Call', detail: displayPhone, href: 'tel:' + phone, Icon: Phone },
     { label: 'WhatsApp', detail: displayPhone, href: whatsappEnquiry, Icon: MessageCircle },
     { label: 'Email', detail: email, href: 'mailto:' + email, Icon: Mail },
+    { label: 'Instagram', detail: '@__team_bazooka_', href: 'https://www.instagram.com/__team_bazooka_?utm_source=ig_web_button_share_sheet&knvt=ZDNlZDc0MzIxNw==', Icon: InstagramIcon },
   ];
   const fleet = vehicles.slice().sort((a, b) => showcaseOrder(a.registration) - showcaseOrder(b.registration));
   const slides = fleet.flatMap(bus => {
