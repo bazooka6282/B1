@@ -27,6 +27,12 @@ export function sessionDays(startDate: string, endDate: string) {
  return difference>=0 ? difference/86400000+1 : 0;
 }
 export const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());
+export function tpSessionStatus(session:Row,date:string) {
+ if(session.status==='Completed'||session.status==='Cancelled')return String(session.status);
+ if(String(session.end_date)<date)return 'Expired';
+ if(String(session.start_date)>date)return 'Upcoming';
+ return 'Active';
+}
 export function shiftTpDate(value: string, offset: number) {
  const date = new Date(value + 'T00:00:00Z');
  date.setUTCDate(date.getUTCDate() + offset);

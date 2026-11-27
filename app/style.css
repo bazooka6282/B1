@@ -463,6 +463,9 @@
 .tp-approval-selector { display: grid; gap: 6px; max-width: 38rem; }
 .tp-approval-selector label { font-size: 14px; font-weight: 750; }
 .tp-approval-panel form h3 { margin: 16px 0 10px; }
+.status.expired { background: #fae4e4; color: #912f39; }
+#extend-tp-heading + button { align-self: start; }
+.extend-tp-form { display: grid; gap: 12px; }
 @media (max-width: 480px) {
   .tp-week-navigation strong { order: -1; flex-basis: 100%; }
 }
